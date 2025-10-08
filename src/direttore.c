@@ -31,7 +31,10 @@ int main(int argc, char *argv[]) {
     while(fgets(line, sizeof(line), fp)) {
         
     }
-*/  
+*/
+
+    
+
     init();
 
 }
