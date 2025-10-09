@@ -4,10 +4,3 @@
 *    2.1 Inizializzazione processi
 * 3. avvio sim (SIM_DURATION giorni, N_NANO_SECS minuti)
 */
-
-main
-    risorse
-
-    crea_processo("../bin/nomeFile", num)
-    crea_processo
-    crea_processo

@@ -1,12 +1,12 @@
 #include "../../header/ipc/message_queue.h"
 #include "../../header/common.h"
 
-#include <sys/ipc.h>
-#include <sys/msg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
 
 int create_queue(key_t k) {
     int qid = msgget(k, IPC_CREAT | IPC_EXCL | 0600);
@@ -18,16 +18,16 @@ int create_queue(key_t k) {
     return qid;
 }
 
-void send_msg(int qid, void msg) {
-    if(msgsnd(qid, &msg, sizeof(void)-sizeof(long), 0) < 0) {
+void send_msg(int qid, messaggio* msg) {
+    if(msgsnd(qid, msg, sizeof(messaggio)-sizeof(long), 0) < 0) {
         ERROR
         exit(EXIT_FAILURE);
     }
 
 }
 
-void receive_msg(int qid, void msg, long mtype) {
-    if(msgrcv(qid, &msg, sizeof(void)-sizeof(long), mtype, 0) < 0) {
+void receive_msg(int qid, messaggio* msg, long mtype) {
+    if(msgrcv(qid, msg, sizeof(messaggio)-sizeof(long), mtype, 0) < 0) {
         ERROR
         exit(EXIT_FAILURE);
     }
