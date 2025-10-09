@@ -32,4 +32,9 @@ typedef struct {
 	Statistiche stat;
 } Data;
 
+typedef struct{
+    int shmid;
+    int qid;
+    int semid;
+} Risorse
 #endif

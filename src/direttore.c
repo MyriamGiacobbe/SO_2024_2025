@@ -17,4 +17,5 @@ int main() {
     int shmid = create_shm(KEY_SHM, sizeof(Data), 0600);
 
     
+    
 }
