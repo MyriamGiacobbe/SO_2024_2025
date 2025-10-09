@@ -18,16 +18,16 @@ int create_queue(key_t k) {
     return qid;
 }
 
-void send_msg(int qid, messaggio* msg) {
-    if(msgsnd(qid, msg, sizeof(messaggio)-sizeof(long), 0) < 0) {
+void send_msg(int qid, Messaggio* msg) {
+    if(msgsnd(qid, msg, sizeof(Messaggio)-sizeof(long), 0) < 0) {
         ERROR
         exit(EXIT_FAILURE);
     }
 
 }
 
-void receive_msg(int qid, messaggio* msg, long mtype) {
-    if(msgrcv(qid, msg, sizeof(messaggio)-sizeof(long), mtype, 0) < 0) {
+void receive_msg(int qid, Messaggio* msg, long mtype) {
+    if(msgrcv(qid, msg, sizeof(Messaggio)-sizeof(long), mtype, 0) < 0) {
         ERROR
         exit(EXIT_FAILURE);
     }

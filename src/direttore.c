@@ -1,7 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 #include <sys/wait.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
@@ -10,14 +8,17 @@
 #include "common.h"
 #include "ipc/message_queue.h"
 #include "ipc/semaphores.h"
-#include "ipc/shared_mmemory.h"
+#include "ipc/shared_memory.h"
 #include "ipc/signals.h"
 
 int main() {
+    Data* shared_data;
+    Risorse risorse;
+
     /*1. Inizializzazione risorse */
-    int semid = create_sem(KEY_SEM, NOF_WORKERS_SEATS);
-    int qid = create_queue(KEY_MSG);
-    int shmid = create_shm(KEY_SHM, sizeof(Data), 0600);
+    risorse.semid = create_sem(KEY_SEM, NOF_WORKERS_SEATS);
+    risorse.qid = create_queue(KEY_MSG);
+    risorse.shmid = create_shm(KEY_SHM, sizeof(Data));
 
     /*2.1 Creazione utenti*/
     for(int i = 0; i < NOF_WORKERS; i++) {

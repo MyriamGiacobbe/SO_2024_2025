@@ -7,3 +7,6 @@
 #define NOF_PAUSE = 10
 #define P_SERV_MIN = 0.2
 #define P_SERV_MAX = 0.9
+
+
+gcc nome -D 

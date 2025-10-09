@@ -1,6 +1,18 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#include <string.h>
+#include <unistd.h>
+#include <errno.h>
+
+#ifdef EXPLODE
+#include "config_explode.h"
+#endif
+
+#ifdef TIMEOUT
+#include "config_timeout.h"
+#endif
+
 #define ERROR fprintf(stderr, \
 					  "%s:%d: PID=%5d: Error %d (%s)\n", \
 					  __FILE__,			\
@@ -9,11 +21,11 @@
 					  errno,			\
 					  strerror(errno));
 
-#define N_SERV 6
+#define NUM_SERV 6
 
 #define KEY_SHM 2025
 #define KEY_SEM 2026
-#define KEY_msg 2027
+#define KEY_MSG 2027
 
 typedef struct {
     int n_utenti_serviti[NUM_SERV];
@@ -29,6 +41,7 @@ typedef struct {
 } Statistiche;
 
 typedef struct {
+    int arr[NOF_WORKERS_SEATS];
 	Statistiche stat;
 } Data;
 
