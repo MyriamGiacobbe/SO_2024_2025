@@ -1,5 +1,5 @@
-#include "../../header/ipc/semaphores.h"
-#include "../../header/common.h"
+#include "semaphores.h"
+#include "../common.h"
 
 #include <stdio.h>
 #include <stdlib.h>

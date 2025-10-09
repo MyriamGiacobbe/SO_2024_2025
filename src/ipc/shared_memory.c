@@ -1,5 +1,5 @@
-#include "../../header/ipc/shared_memory.h"
-#include "../../header/common.h"
+#include "shared_memory.h"
+#include "../common.h"
 
 #include <stdio.h>
 #include <stdlib.h>

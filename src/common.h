@@ -36,5 +36,6 @@ typedef struct{
     int shmid;
     int qid;
     int semid;
-} Risorse
+} Risorse;
+
 #endif
