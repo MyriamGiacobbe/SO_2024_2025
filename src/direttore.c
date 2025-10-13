@@ -13,8 +13,15 @@
 #include "ipc/shared_memory.h"
 //#include "ipc/signals.h"
 
+int stopped = 0;
+
 void handle_signal(int signum) {
-    printf("Ricevuto il segnale %d (%s). I figli stanno continuando\n", signum, strsignal(signum));
+    int status;
+    pid_t pid;
+    while((pid = waitpid(-1, &status, WUNTRACED)) > 0) {
+        if(WIFSTOPPED(status))
+            stopped++;
+    }
 }
 
 int main() {
@@ -27,12 +34,17 @@ int main() {
     risorse.qid = create_queue(KEY_MSG);
     risorse.shmid = create_shm(KEY_SHM, sizeof(Data));
     */
+
+    setpgid(0, 0);
+
     struct sigaction sa;
     bzero(&sa, sizeof(sa)); //setta tutti i bytes a 0
     sa.sa_handler = handle_signal; //puntatore alla funzione handle_signal
     sigaction(SIGCHLD, &sa, NULL); //setta l'handler nuovo
 
     pid_t pid;
+
+    printf("[PADRE] Creo utenti\n");
 
     /*2.1 Creazione utenti*/
     for(int i = 0; i < NOF_USERS; i++) {
@@ -42,13 +54,17 @@ int main() {
                 ERROR
                 exit(EXIT_FAILURE);
             case 0:
-                pause();
+                printf("[UTENTE %d] Creato\n", getpid());
+                setpgid(0, getppid());
+                raise(SIGSTOP);
                 char* args[] = {"utente", NULL};
                 execvp("../bin/utente", args);
                 exit(EXIT_SUCCESS);
             default:
         }
     }
+
+    printf("[PADRE] Creo operatori\n");
 
     /*2.2 Creazione operatori*/
     for(int i = 0; i < NOF_WORKERS; i++) {
@@ -58,7 +74,9 @@ int main() {
                 ERROR
                 exit(EXIT_FAILURE);
             case 0:
-                pause();
+                printf("[OPERATORE %d] Creato\n", getpid());
+                setpgid(0, getppid());
+                raise(SIGSTOP);
                 char* args[] = {"opertaore", NULL};
                 execvp("../bin/opertaore", args);
                 exit(EXIT_SUCCESS);
@@ -66,6 +84,7 @@ int main() {
         }
     }
 
+    printf("[PADRE] Creo erogatore\n");
     /*2.3 Creazione erogatore*/
     pid = fork();
     switch(pid) {
@@ -73,7 +92,9 @@ int main() {
             ERROR
             exit(EXIT_FAILURE);
         case 0:
-            pause();
+            printf("[EROG %d] Creato\n", getpid());
+            setpgid(0, getppid());
+            raise(SIGSTOP);
             char* args[] = {"opertaore", NULL};
             execvp("../bin/opertaore", args);
             exit(EXIT_SUCCESS);
@@ -82,7 +103,10 @@ int main() {
     
     //allarm(SIM_DURATION);
 
-    kill(-1, SIGCONT);
+    while(stopped < (NOF_USERS + NOF_WORKERS + 1))
+        pause();
+
+    kill(-getpid(), SIGCONT);
 
     for(int i = 0; i < (NOF_USERS + NOF_WORKERS + 1); i++)
         wait(NULL);

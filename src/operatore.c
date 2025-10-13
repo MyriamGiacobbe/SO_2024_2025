@@ -2,6 +2,6 @@
 #include <unistd.h>
 
 int main() {
-    printf("[OPERATORE] Ciao sono il figlio %d", getpid());
+    printf("\n[OPERATORE] Ciao sono il figlio %d\n", getpid());
     return 0;
 }
