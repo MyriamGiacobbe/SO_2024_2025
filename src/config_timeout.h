@@ -1,12 +1,10 @@
-#define SIM_DURATION = 5
-#define N_NANO_SECS = 5
-#define EXPLODE_THRESHOLD = 50
-#define NOF_USERS = 15
-#define NOF_WORKERS = 10
-#define NOF_WORKERS_SEATS = 7
-#define NOF_PAUSE = 10
-#define P_SERV_MIN = 0.2
-#define P_SERV_MAX = 0.9
+#define SIM_DURATION 5
+#define N_NANO_SECS 5
+#define EXPLODE_THRESHOLD 50
+#define NOF_USERS 15
+#define NOF_WORKERS 10
+#define NOF_WORKERS_SEATS 7
+#define NOF_PAUSE 10
+#define P_SERV_MIN 0.2
+#define P_SERV_MAX 0.9
 
-
-gcc nome -D 

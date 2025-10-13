@@ -1,12 +1,6 @@
 #include "shared_memory.h"
 #include "../common.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
 
 int create_shm(key_t k, size_t size) {
     int shmid = shmget(k, size, IPC_CREAT | IPC_EXCL | 0600);

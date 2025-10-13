@@ -1,12 +1,6 @@
 #include "message_queue.h"
 #include "../common.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <sys/ipc.h>
-#include <sys/msg.h>
 
 int create_queue(key_t k) {
     int qid = msgget(k, IPC_CREAT | IPC_EXCL | 0600);

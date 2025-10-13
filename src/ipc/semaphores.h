@@ -1,6 +1,21 @@
 #ifndef SEM_H
 #define SEM_H
 
+#define ERROR fprintf(stderr, \
+					  "%s:%d: PID=%5d: Error %d (%s)\n", \
+					  __FILE__,			\
+					  __LINE__,			\
+					  getpid(),			\
+					  errno,			\
+					  strerror(errno));
+                      
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <sys/ipc.h>
+#include <sys/sem.h>
+
 union semun {
     int val;
     struct semid_ds* buf;
@@ -8,8 +23,8 @@ union semun {
 };
 
 int create_sem(key_t k, int senum);
-int reserve_sem(int semid, int semnum);
-int release_sem(int semid, int semnum);
+void reserve_sem(int semid, int semnum);
+void release_sem(int semid, int semnum);
 void deleate_sem(int semid);
 
 #endif
