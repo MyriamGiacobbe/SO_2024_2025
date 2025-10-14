@@ -1,5 +1,4 @@
 #include "semaphores.h"
-#include "../common.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,7 +25,7 @@ void reserve_sem(int semid, int semnum) {
 }
 
 void release_sem(int semid, int semnum) {
-    struct sembuf sops = {semnum, -1, 0};
+    struct sembuf sops = {semnum, +1, 0};
     if(semop(semid, &sops, 1) == -1) {
         ERROR
         exit(EXIT_FAILURE);

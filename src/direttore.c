@@ -13,17 +13,6 @@
 #include "ipc/shared_memory.h"
 //#include "ipc/signals.h"
 
-int stopped = 0;
-
-void handle_signal(int signum) {
-    int status;
-    pid_t pid;
-    while((pid = waitpid(-1, &status, WUNTRACED)) > 0) {
-        if(WIFSTOPPED(status))
-            stopped++;
-    }
-}
-
 int main() {
     /*
     Data* shared_data;
@@ -35,12 +24,11 @@ int main() {
     risorse.shmid = create_shm(KEY_SHM, sizeof(Data));
     */
 
-    setpgid(0, 0);
+    int semid = create_sem(KEY_SEM, 1);
+    semctl(semid, 0, SETVAL, 0);
 
-    struct sigaction sa;
-    bzero(&sa, sizeof(sa)); //setta tutti i bytes a 0
-    sa.sa_handler = handle_signal; //puntatore alla funzione handle_signal
-    sigaction(SIGCHLD, &sa, NULL); //setta l'handler nuovo
+    char str[10];
+    snprintf(str, 10, "%d", semid);
 
     pid_t pid;
 
@@ -55,11 +43,11 @@ int main() {
                 exit(EXIT_FAILURE);
             case 0:
                 printf("[UTENTE %d] Creato\n", getpid());
-                setpgid(0, getppid());
-                raise(SIGSTOP);
-                char* args[] = {"utente", NULL};
+                reserve_sem(semid, 0);
+                char* args[] = {"utente", str, NULL};
                 execvp("../bin/utente", args);
-                exit(EXIT_SUCCESS);
+                //printf("Entraaaa????");
+                //exit(EXIT_SUCCESS);
             default:
         }
     }
@@ -75,10 +63,10 @@ int main() {
                 exit(EXIT_FAILURE);
             case 0:
                 printf("[OPERATORE %d] Creato\n", getpid());
-                setpgid(0, getppid());
-                raise(SIGSTOP);
+                reserve_sem(semid, 0);
                 char* args[] = {"opertaore", NULL};
                 execvp("../bin/opertaore", args);
+                release_sem(semid, 0);
                 exit(EXIT_SUCCESS);
             default:
         }
@@ -93,23 +81,26 @@ int main() {
             exit(EXIT_FAILURE);
         case 0:
             printf("[EROG %d] Creato\n", getpid());
-            setpgid(0, getppid());
-            raise(SIGSTOP);
+            reserve_sem(semid, 0);
             char* args[] = {"opertaore", NULL};
             execvp("../bin/opertaore", args);
+            release_sem(semid, 0);
             exit(EXIT_SUCCESS);
         default:
     }
     
     //allarm(SIM_DURATION);
 
-    while(stopped < (NOF_USERS + NOF_WORKERS + 1))
-        pause();
+    
+    for(int i = 0; i < (NOF_USERS+NOF_WORKERS+1); i++) {
+        //printf("[PADRE] Non entro nel for\n");
+        release_sem(semid, 0);
+    }
+    
+    int status;
+    waitpid(0, &status, 0);
 
-    kill(-getpid(), SIGCONT);
-
-    for(int i = 0; i < (NOF_USERS + NOF_WORKERS + 1); i++)
-        wait(NULL);
+    //deleate_sem(semid);
 
     printf("[PADRE] Tutto a posto\n");
 
