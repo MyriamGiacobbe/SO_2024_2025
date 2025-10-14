@@ -64,8 +64,8 @@ int main() {
             case 0:
                 setpgid(0, getppid());
                 printf("[OPERATORE %d] Creato\n", getpid());
-                char* args[] = {"opertaore", str, NULL};
-                execvp("../bin/opertaore", args);
+                char* args[] = {"operatore", str, NULL};
+                execvp("../bin/operatore", args);
             default:
         }
     }
@@ -80,8 +80,8 @@ int main() {
         case 0:
             setpgid(0, getppid());
             printf("[EROG %d] Creato\n", getpid());
-            char* args[] = {"opertaore", str, NULL};
-            execvp("../bin/opertaore", args);
+            char* args[] = {"erogatore", str, NULL};
+            execvp("../bin/erogatore", args);
         default:
     }
     
