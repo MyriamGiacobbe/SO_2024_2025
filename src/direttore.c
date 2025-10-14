@@ -24,6 +24,8 @@ int main() {
     risorse.shmid = create_shm(KEY_SHM, sizeof(Data));
     */
 
+    setpgid(0, 0);
+
     int semid = create_sem(KEY_SEM, 1);
     semctl(semid, 0, SETVAL, 0);
 
@@ -42,12 +44,10 @@ int main() {
                 ERROR
                 exit(EXIT_FAILURE);
             case 0:
+                setpgid(0, getppid());
                 printf("[UTENTE %d] Creato\n", getpid());
-                reserve_sem(semid, 0);
                 char* args[] = {"utente", str, NULL};
                 execvp("../bin/utente", args);
-                //printf("Entraaaa????");
-                //exit(EXIT_SUCCESS);
             default:
         }
     }
@@ -62,12 +62,10 @@ int main() {
                 ERROR
                 exit(EXIT_FAILURE);
             case 0:
+                setpgid(0, getppid());
                 printf("[OPERATORE %d] Creato\n", getpid());
-                reserve_sem(semid, 0);
-                char* args[] = {"opertaore", NULL};
+                char* args[] = {"opertaore", str, NULL};
                 execvp("../bin/opertaore", args);
-                release_sem(semid, 0);
-                exit(EXIT_SUCCESS);
             default:
         }
     }
@@ -80,12 +78,10 @@ int main() {
             ERROR
             exit(EXIT_FAILURE);
         case 0:
+            setpgid(0, getppid());
             printf("[EROG %d] Creato\n", getpid());
-            reserve_sem(semid, 0);
-            char* args[] = {"opertaore", NULL};
+            char* args[] = {"opertaore", str, NULL};
             execvp("../bin/opertaore", args);
-            release_sem(semid, 0);
-            exit(EXIT_SUCCESS);
         default:
     }
     
@@ -97,10 +93,9 @@ int main() {
         release_sem(semid, 0);
     }
     
-    int status;
-    waitpid(0, &status, 0);
+    while(wait(NULL) > 0);
 
-    //deleate_sem(semid);
+    deleate_sem(semid);
 
     printf("[PADRE] Tutto a posto\n");
 
