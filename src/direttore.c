@@ -15,6 +15,7 @@
 
 #define TOTAL_CHILD NOF_USERS+NOF_WORKERS+1
 
+pid_t pgid;
 int count = 0;
 
 void create_process(char* file_name, char* args[]) {
@@ -26,28 +27,37 @@ void create_process(char* file_name, char* args[]) {
 
     if(pid == 0) {
         printf("Creo %S\n", file_name);
-        execvp(file_name, args, NULL);
+        count++;
+        setpgid(0, pgid);
+        execvp(file_name, args);
     }
 }
 
 int main() {
-    /*
-    Data* shared_data;
-    Risorse risorse;
+    //Data* shared_data;
+    //Risorse risorse;
+    pgid = getpid();
 
+    /*
     //1. Inizializzazione risorse
     risorse.semid = create_sem(KEY_SEM, NOF_WORKERS_SEATS);
     risorse.qid = create_queue(KEY_MSG);
     risorse.shmid = create_shm(KEY_SHM, sizeof(Data));
-    */
 
-    setpgid(0, 0);
+    //setgpid(0, getpid());
 
     int semid = create_sem(KEY_SEM, 1);
     semctl(semid, 0, SETVAL, 0);
 
-    char str[10];
-    snprintf(str, 10, "%d", semid);
+    char sem_str[8];
+    snprintf(sem_str, 8, "%d", semid);
+
+    char q_str[8];
+    snprintf(q_str, 8, "%d", qid);
+
+    char shm_str[8];
+    snprintf(shm_str, 8, "%d", shmid);
+    */
 
     pid_t pid;
 
@@ -68,15 +78,11 @@ int main() {
     
     //allarm(SIM_DURATION);
 
+    while(count < TOTAL_CHILD);
+    kill(-pgid, SIGCONT);
     
-    for(int i = 0; i < (NOF_USERS+NOF_WORKERS+1); i++) {
-        //printf("[PADRE] Non entro nel for\n");
-        release_sem(semid, 0);
-    }
     
     while(wait(NULL) > 0);
-
-    deleate_sem(semid);
 
     printf("[PADRE] Tutto a posto\n");
 

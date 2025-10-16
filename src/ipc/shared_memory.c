@@ -1,5 +1,4 @@
 #include "shared_memory.h"
-#include "../common.h"
 
 
 int create_shm(key_t k, size_t size) {

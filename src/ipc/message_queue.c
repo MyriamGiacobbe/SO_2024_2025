@@ -1,5 +1,4 @@
 #include "message_queue.h"
-#include "../common.h"
 
 
 int create_queue(key_t k) {
