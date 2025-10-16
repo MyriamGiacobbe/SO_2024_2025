@@ -13,6 +13,23 @@
 #include "ipc/shared_memory.h"
 //#include "ipc/signals.h"
 
+#define TOTAL_CHILD NOF_USERS+NOF_WORKERS+1
+
+int count = 0;
+
+void create_process(char* file_name, char* args[]) {
+    pid_t pid = fork();
+    if(pid == -1) {
+        perror("fork");
+        exit(EXIT_FAILURE);
+    }
+
+    if(pid == 0) {
+        printf("Creo %S\n", file_name);
+        execvp(file_name, args, NULL);
+    }
+}
+
 int main() {
     /*
     Data* shared_data;
@@ -37,53 +54,17 @@ int main() {
     printf("[PADRE] Creo utenti\n");
 
     /*2.1 Creazione utenti*/
-    for(int i = 0; i < NOF_USERS; i++) {
-        pid = fork();
-        switch(pid) {
-            case -1:
-                ERROR
-                exit(EXIT_FAILURE);
-            case 0:
-                setpgid(0, getppid());
-                printf("[UTENTE %d] Creato\n", getpid());
-                char* args[] = {"utente", str, NULL};
-                execvp("../bin/utente", args);
-            default:
-        }
-    }
+    for(int i = 0; i < NOF_USERS; i++)
+        create_process("../bin/utente", NULL);
 
     printf("[PADRE] Creo operatori\n");
 
     /*2.2 Creazione operatori*/
-    for(int i = 0; i < NOF_WORKERS; i++) {
-        pid = fork();
-        switch(pid) {
-            case -1:
-                ERROR
-                exit(EXIT_FAILURE);
-            case 0:
-                setpgid(0, getppid());
-                printf("[OPERATORE %d] Creato\n", getpid());
-                char* args[] = {"operatore", str, NULL};
-                execvp("../bin/operatore", args);
-            default:
-        }
-    }
+    for(int i = 0; i < NOF_WORKERS; i++)
+        create_process("../bin/operatore", NULL);
 
-    printf("[PADRE] Creo erogatore\n");
-    /*2.3 Creazione erogatore*/
-    pid = fork();
-    switch(pid) {
-        case -1:
-            ERROR
-            exit(EXIT_FAILURE);
-        case 0:
-            setpgid(0, getppid());
-            printf("[EROG %d] Creato\n", getpid());
-            char* args[] = {"erogatore", str, NULL};
-            execvp("../bin/erogatore", args);
-        default:
-    }
+    /*2.2 Creazione erogatore_ticket*/
+    create_process("../bin/erogatore", NULL);
     
     //allarm(SIM_DURATION);
 

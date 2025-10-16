@@ -13,7 +13,6 @@
 #include "config_timeout.h"
 #endif
 
-
 #define NUM_SERV 6
 
 #define KEY_SHM 2025
@@ -34,8 +33,10 @@ typedef struct {
 } Statistiche;
 
 typedef struct {
-    int arr[NOF_WORKERS_SEATS];
+    pid_t pid[]
+    //int arr[NOF_WORKERS_SEATS];
 	Statistiche stat;
+    Risorse risorse;
 } Data;
 
 typedef struct{
