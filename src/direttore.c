@@ -26,10 +26,10 @@ void create_process(char* file_name, char* args[]) {
     }
 
     if(pid == 0) {
-        printf("Creo %S\n", file_name);
-        count++;
+        printf("Creo %s\n", file_name);
         setpgid(0, pgid);
         execvp(file_name, args);
+        perror("execvp");
     }
 }
 
@@ -64,17 +64,22 @@ int main() {
     printf("[PADRE] Creo utenti\n");
 
     /*2.1 Creazione utenti*/
-    for(int i = 0; i < NOF_USERS; i++)
+    for(int i = 0; i < NOF_USERS; i++) {
         create_process("../bin/utente", NULL);
+        count++;
+    }
 
     printf("[PADRE] Creo operatori\n");
 
     /*2.2 Creazione operatori*/
-    for(int i = 0; i < NOF_WORKERS; i++)
+    for(int i = 0; i < NOF_WORKERS; i++) {
         create_process("../bin/operatore", NULL);
+        count++;
+    }
 
     /*2.2 Creazione erogatore_ticket*/
-    create_process("../bin/erogatore", NULL);
+    create_process("../bin/erogatore_ticket", NULL);
+    count++;
     
     //allarm(SIM_DURATION);
 

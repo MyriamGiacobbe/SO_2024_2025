@@ -32,6 +32,12 @@ typedef struct {
     double operatore_sportello_giorno;
 } Statistiche;
 
+typedef struct{
+    int shmid;
+    int qid;
+    int semid;
+} Risorse;
+
 typedef struct {
     //pid_t pid[];
     //int arr[NOF_WORKERS_SEATS];
@@ -39,10 +45,5 @@ typedef struct {
     Risorse risorse;
 } Data;
 
-typedef struct{
-    int shmid;
-    int qid;
-    int semid;
-} Risorse;
 
 #endif
