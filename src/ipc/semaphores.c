@@ -23,6 +23,17 @@ void init_sem(int semid, int semnum, int val) {
     }
 }
 
+void sem_operation(struct sembuf sops, int semid, int semnum, int semflg, int op, int nsem) {
+    sops.sem_num = semnum;
+    sops.sem_flg = semflg;
+    sops.sem_op = op;
+
+    if(semop(semid, &sops, nsem) == -1) {
+        ERROR
+        exit(EXIT_FAILURE);
+    }    
+}
+
 void reserve_sem(int semid, int semnum) {
     struct sembuf sops = {semnum, -1, 0};
     if(semop(semid, &sops, 1) == -1) {

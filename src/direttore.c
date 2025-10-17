@@ -62,15 +62,11 @@ int main() {
 
     pid_t pid;
 
-    printf("[PADRE] Creo utenti\n");
-
     /*2.1 Creazione utenti*/
     char* args1[] = {"utente", semid_dir_str, NULL};
     for(int i = 0; i < NOF_USERS; i++) {
         create_process("../bin/utente", args1);
     }
-
-    printf("[PADRE] Creo operatori\n");
 
     /*2.2 Creazione operatori*/
     char* args2[] = {"operatore", semid_dir_str, NULL};
@@ -82,13 +78,9 @@ int main() {
     create_process("../bin/erogatore", args3);
     
     //allarm(SIM_DURATION);
-    sops.sem_num = 0;
-    sops.sem_flg = 0;
-    sops.sem_op = 0;
-    semop(semid_dir, &sops, 1);
+    sem_operation(sops, semid_dir, 0, 0, 0, 1);
 
     //kill(-pgid, SIGCONT);
-    printf("Arrivo qui?? %d\n", TOTAL_CHILD);
     
     while(wait(NULL) > 0);
 
