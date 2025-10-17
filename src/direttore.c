@@ -26,7 +26,7 @@ void create_process(char* file_name, char* args[]) {
 
     if(pid == 0) {
         printf("Creo %s\n", file_name);
-        setpgid(0, pgid);
+        setpgid(0, pgid);                   //per killarli tutti alla fine
         execvp(file_name, args);
         perror("execvp");
     }
@@ -36,7 +36,10 @@ int main() {
     //Data* shared_data;
     //Risorse risorse;
     pgid = getpid();
-    int semid_dir = create_sem(IPC_PRIVATE, TOTAL_CHILD);
+    struct sembuf sops;
+    int semid_dir = create_sem(IPC_PRIVATE, 1);
+
+    init_sem(semid_dir, 0, TOTAL_CHILD);
 
     /*
     //1. Inizializzazione risorse
@@ -79,8 +82,6 @@ int main() {
     create_process("../bin/erogatore", args3);
     
     //allarm(SIM_DURATION);
-
-    struct sembuf sops;
     sops.sem_num = 0;
     sops.sem_flg = 0;
     sops.sem_op = 0;
