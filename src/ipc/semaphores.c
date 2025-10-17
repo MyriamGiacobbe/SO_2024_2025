@@ -16,6 +16,13 @@ int create_sem(key_t k, int nsems) {
     return semid;
 }
 
+void init_sem(int semid, int semnum, int val) {
+    if(semctl(semid, semnum, SETVAL, val) == -1) {
+        ERROR
+        exit(EXIT_FAILURE);
+    }
+}
+
 void reserve_sem(int semid, int semnum) {
     struct sembuf sops = {semnum, -1, 0};
     if(semop(semid, &sops, 1) == -1) {

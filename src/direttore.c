@@ -16,7 +16,6 @@
 #define TOTAL_CHILD NOF_USERS+NOF_WORKERS+1
 
 pid_t pgid;
-int count = 0;
 
 void create_process(char* file_name, char* args[]) {
     pid_t pid = fork();
@@ -37,14 +36,13 @@ int main() {
     //Data* shared_data;
     //Risorse risorse;
     pgid = getpid();
+    int semid_dir = create_sem(IPC_PRIVATE, TOTAL_CHILD);
 
     /*
     //1. Inizializzazione risorse
     risorse.semid = create_sem(KEY_SEM, NOF_WORKERS_SEATS);
     risorse.qid = create_queue(KEY_MSG);
     risorse.shmid = create_shm(KEY_SHM, sizeof(Data));
-
-    //setgpid(0, getpid());
 
     int semid = create_sem(KEY_SEM, 1);
     semctl(semid, 0, SETVAL, 0);
@@ -55,37 +53,41 @@ int main() {
     char q_str[8];
     snprintf(q_str, 8, "%d", qid);
 
-    char shm_str[8];
-    snprintf(shm_str, 8, "%d", shmid);
     */
+    char semid_dir_str[8];
+    snprintf(semid_dir_str, 8, "%d", semid_dir);
 
     pid_t pid;
 
     printf("[PADRE] Creo utenti\n");
 
     /*2.1 Creazione utenti*/
+    char* args1[] = {"utente", semid_dir_str, NULL};
     for(int i = 0; i < NOF_USERS; i++) {
-        create_process("../bin/utente", NULL);
-        count++;
+        create_process("../bin/utente", args1);
     }
 
     printf("[PADRE] Creo operatori\n");
 
     /*2.2 Creazione operatori*/
-    for(int i = 0; i < NOF_WORKERS; i++) {
-        create_process("../bin/operatore", NULL);
-        count++;
-    }
+    char* args2[] = {"operatore", semid_dir_str, NULL};
+    for(int i = 0; i < NOF_WORKERS; i++)
+        create_process("../bin/operatore", args2);
 
     /*2.2 Creazione erogatore_ticket*/
-    create_process("../bin/erogatore_ticket", NULL);
-    count++;
+    char* args3[] = {"erogatore", semid_dir_str, NULL};
+    create_process("../bin/erogatore", args3);
     
     //allarm(SIM_DURATION);
 
-    while(count < TOTAL_CHILD);
-    kill(-pgid, SIGCONT);
-    
+    struct sembuf sops;
+    sops.sem_num = 0;
+    sops.sem_flg = 0;
+    sops.sem_op = 0;
+    semop(semid_dir, &sops, 1);
+
+    //kill(-pgid, SIGCONT);
+    printf("Arrivo qui?? %d\n", TOTAL_CHILD);
     
     while(wait(NULL) > 0);
 
