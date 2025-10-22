@@ -15,10 +15,6 @@
 
 #define NUM_SERV 6
 
-#define KEY_SHM 2025
-#define KEY_SEM 2026
-#define KEY_MSG 2027
-
 typedef struct {
     int n_utenti_serviti[NUM_SERV];
     int n_serv_erog[NUM_SERV];
@@ -33,7 +29,6 @@ typedef struct {
 } Statistiche;
 
 typedef struct{
-    int shmid;
     int qid;
     int semid;
 } Risorse;

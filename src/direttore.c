@@ -33,48 +33,46 @@ void create_process(char* file_name, char* args[]) {
 }
 
 int main() {
-    //Data* shared_data;
-    //Risorse risorse;
+    Data* shared_data;
     pgid = getpid();
     struct sembuf sops;
     int semid_dir = create_sem(IPC_PRIVATE, 1);
 
     init_sem(semid_dir, 0, TOTAL_CHILD);
 
-    /*
+    printf("Vaa??\n");
+    
     //1. Inizializzazione risorse
-    risorse.semid = create_sem(KEY_SEM, NOF_WORKERS_SEATS);
-    risorse.qid = create_queue(KEY_MSG);
-    risorse.shmid = create_shm(KEY_SHM, sizeof(Data));
+    int shmid = create_shm(IPC_PRIVATE, sizeof(Data));
+    shared_data = (Data*)attach_shm(shmid);
+    shared_data->risorse.semid = create_sem(IPC_PRIVATE, NOF_WORKERS_SEATS);
+    shared_data->risorse.qid = create_queue(IPC_PRIVATE);
+    printf("Era queloooo.\n");
 
-    int semid = create_sem(KEY_SEM, 1);
-    semctl(semid, 0, SETVAL, 0);
 
-    char sem_str[8];
-    snprintf(sem_str, 8, "%d", semid);
-
-    char q_str[8];
-    snprintf(q_str, 8, "%d", qid);
-
-    */
     char semid_dir_str[8];
     snprintf(semid_dir_str, 8, "%d", semid_dir);
+
+    char shmid_dir_str[8];
+    snprintf(shmid_dir_str, 8, "%d", shmid);
+    
+    printf("Inizializzazione\n");
 
     pid_t pid;
 
     /*2.1 Creazione utenti*/
-    char* args1[] = {"utente", semid_dir_str, NULL};
+    char* args1[] = {"utente", semid_dir_str, shmid_dir_str, NULL};
     for(int i = 0; i < NOF_USERS; i++) {
         create_process("../bin/utente", args1);
     }
 
     /*2.2 Creazione operatori*/
-    char* args2[] = {"operatore", semid_dir_str, NULL};
+    char* args2[] = {"operatore", semid_dir_str, shmid_dir_str, NULL};
     for(int i = 0; i < NOF_WORKERS; i++)
         create_process("../bin/operatore", args2);
 
     /*2.2 Creazione erogatore_ticket*/
-    char* args3[] = {"erogatore", semid_dir_str, NULL};
+    char* args3[] = {"erogatore", semid_dir_str, shmid_dir_str, NULL};
     create_process("../bin/erogatore", args3);
     
     //allarm(SIM_DURATION);

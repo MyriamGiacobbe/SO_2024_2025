@@ -1,59 +1,62 @@
-CC = gcc -DEXPLODE         # Compiler used is gcc
-RM = rm -f        # Command to remove files
-CFLAGS = -Wall -Wextra -std=c99 -I./src/ipc   # Compilation flags and include path
+CC 		:= gcc
 
-# Directory paths
-SRC_DIR = src
-IPC_DIR = $(SRC_DIR)/ipc
-BIN_DIR = bin
+DEX_F 	:= -DEXPLODE
+TIMEOUT	:= -DTIMEOUT
 
-# Common IPC object files
-IPC_OBJS = \
-	$(IPC_DIR)/message_queue.o \
-	$(IPC_DIR)/semaphores.o \
-	$(IPC_DIR)/shared_memory.o \
-	$(IPC_DIR)/signals.o
+SDIR	:= src/
+IPC_DIR := $(SDIR)ipc/
+BIN_DIR := bin/
 
-# Individual process source files
-DIRETTORE_SRC = $(SRC_DIR)/direttore.c
-UTENTE_SRC = $(SRC_DIR)/utente.c
-OPERATORE_SRC = $(SRC_DIR)/operatore.c
-EROGATORE_SRC = $(SRC_DIR)/erogatore_ticket.c
+SRC 	:= $(SDIR)direttore.c $(SDIR)utente.c $(SDIR)operatore.c $(SDIR)erogatore_ticket.c
+IPC 	:= $(IPC_DIR)message_queue.c $(IPC_DIR)semaphores.c $(IPC_DIR)shared_memory.c #$(IPC_DIR)signals.c
+OBJ		:= $(SRC:$(SDIR)%.c=$(BIN_DIR)%.o)
+OBJ_IPC := $(IPC:$(IPC_DIR)%.c=$(BIN_DIR)%.o)
+TARGET  := $(BIN_DIR)direttore
 
-# Corresponding executables
-DIRETTORE_EXE = $(BIN_DIR)/direttore
-UTENTE_EXE = $(BIN_DIR)/utente
-OPERATORE_EXE = $(BIN_DIR)/operatore
-EROGATORE_EXE = $(BIN_DIR)/erogatore_ticket
 
-# Default target
-all: $(DIRETTORE_EXE) $(UTENTE_EXE) $(OPERATORE_EXE) $(EROGATORE_EXE)
+.PHONY: all run clean   			#specifico che sono regole del makefile e non altro al di fuori
 
-run: $(DIRETTORE_EXE)
-	./$(DIRETTORE_EXE)
+run: all
+	./$(TARGET)
 
-# Linking rules
-$(DIRETTORE_EXE): $(DIRETTORE_SRC) $(IPC_OBJS)
-	@mkdir -p $(BIN_DIR)
-	$(CC) $(CFLAGS) -o $@ $^
+all: $(TARGET)
+	$(CC) $(BIN_DIR)direttore.o $(OBJ_IPC) -o $(TARGET)
+	$(CC) $(BIN_DIR)operatore.o $(OBJ_IPC) -o operatore.o 
+	$(CC) $(BIN_DIR)erogatore_ticket.o $(OBJ_IPC) -o erogatore_ticket.o 
+	$(CC) $(BIN_DIR)utente.o $(OBJ_IPC) -o utente.o
 
-$(UTENTE_EXE): $(UTENTE_SRC) $(IPC_OBJS)
-	@mkdir -p $(BIN_DIR)
-	$(CC) $(CFLAGS) -o $@ $^
+$(BIN_DIR)%.o: $(IPC_DIR)%.c 							#regola per compilare tutti i .c in .o  $@=target $< = dipendenze
+	$(CC) -c $^ -o $@ 
 
-$(OPERATORE_EXE): $(OPERATORE_SRC) $(IPC_OBJS)
-	@mkdir -p $(BIN_DIR)
-	$(CC) $(CFLAGS) -o $@ $^
 
-$(EROGATORE_EXE): $(EROGATORE_SRC) $(IPC_OBJS)
-	@mkdir -p $(BIN_DIR)
-	$(CC) $(CFLAGS) -o $@ $^
+$(BIN_DIR)%.o: $(SDIR)%.c 							#regola per compilare tutti i .c in .o  $@=target $< = dipendenze
+	$(CC) -c $^ -o $@     	
 
-# Generic rule to build IPC object files
-$(IPC_DIR)/%.o: $(IPC_DIR)/%.c $(IPC_DIR)/%.h
-	$(CC) $(CFLAGS) -c $< -o $@
 
-# Clean compiled files
 clean:
-	$(RM) $(IPC_OBJS)
-	$(RM) $(BIN_DIR)/*
+	rm -f bin/*
+	ipcrm
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

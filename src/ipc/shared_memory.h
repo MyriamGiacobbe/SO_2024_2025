@@ -15,6 +15,7 @@
 #include <errno.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#include <unistd.h>
 
 int create_shm(key_t k, size_t size);
 void* attach_shm(int shmid);

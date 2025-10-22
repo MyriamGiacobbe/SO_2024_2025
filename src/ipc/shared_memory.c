@@ -16,6 +16,7 @@ void* attach_shm(int shmid) {
         ERROR
         exit(EXIT_FAILURE);
     }
+    return shared_data;
 }
 
 void detach_shm(void* shared_data) {
