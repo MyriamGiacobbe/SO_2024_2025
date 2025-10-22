@@ -84,5 +84,8 @@ int main() {
 
     printf("[PADRE] Tutto a posto\n");
 
+    deleate_sem(semid_dir);
+    remove_shm(shmid);
+
     return 0;
 }

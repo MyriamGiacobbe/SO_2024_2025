@@ -18,6 +18,8 @@ int main(int argc, char* argv[]) {
     datptr = (Data*)attach_shm(atoi(argv[2]));
     printf("%d\n", datptr->risorse.qid);
 
+    detach_shm(datptr);
+
     printf("[UTENTE] Ora termino\n");
 
     return 0;
