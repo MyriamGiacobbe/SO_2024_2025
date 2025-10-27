@@ -27,7 +27,6 @@ void create_process(char* file_name, char* args[]) {
     }
 
     if(pid == 0) {
-        printf("Creo %s\n", file_name);
         setpgid(0, pgid);                   //per killarli tutti alla fine
         execvp(file_name, args);
         perror("execvp");
@@ -41,24 +40,18 @@ int main() {
     int semid_dir = create_sem(IPC_PRIVATE, 1);
 
     init_sem(semid_dir, 0, TOTAL_CHILD);
-
-    printf("Vaa??\n");
     
     //1. Inizializzazione risorse
     int shmid = create_shm(IPC_PRIVATE, sizeof(Data));
     shared_data = (Data*)attach_shm(shmid);
     shared_data->risorse.semid = create_sem(IPC_PRIVATE, NOF_WORKERS_SEATS);
     shared_data->risorse.qid = create_queue(IPC_PRIVATE);
-    printf("Era queloooo.\n");
-
 
     char semid_dir_str[8];
     snprintf(semid_dir_str, 8, "%d", semid_dir);
 
     char shmid_dir_str[8];
     snprintf(shmid_dir_str, 8, "%d", shmid);
-    
-    printf("Inizializzazione\n");
 
     pid_t pid;
 
@@ -90,7 +83,6 @@ int main() {
             shared_data->sportelli[i] = 0;
             init_sem(shared_data->risorse.semid, i, 0);
         }
-        printf("sportello %d = %d\n", i, shared_data->sportelli[i]);
     }
     
     sem_operation(sops, semid_dir, 0, 0, 0, 1);
