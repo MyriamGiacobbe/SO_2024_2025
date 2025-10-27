@@ -8,7 +8,7 @@
 
 
 int main(int argc, char* argv[]) {
-    printf("[EROGATORE] Ciao sono il figlio %d\n", getpid());
+    //printf("[EROGATORE] Ciao sono il figlio %d\n", getpid());
     reserve_sem(atoi(argv[1]), 0);
 
     struct sembuf sops;
@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
 
     Data* datptr;
     datptr = (Data*)attach_shm(atoi(argv[2]));
-    printf("%d\n", datptr->risorse.qid);
+    //printf("%d\n", datptr->risorse.qid);
 
     detach_shm(datptr);
 

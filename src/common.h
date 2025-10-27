@@ -35,7 +35,7 @@ typedef struct{
 
 typedef struct {
     //pid_t pid[];
-    //int arr[NOF_WORKERS_SEATS];
+    int sportelli[NOF_WORKERS_SEATS];
 	Statistiche stat;
     Risorse risorse;
 } Data;

@@ -7,11 +7,13 @@
 #include <sys/sem.h>
 #include <sys/shm.h>
 #include <sys/msg.h>
+#include <time.h>
 #include "common.h"
 #include "ipc/message_queue.h"
 #include "ipc/semaphores.h"
 #include "ipc/shared_memory.h"
 //#include "ipc/signals.h"
+
 
 #define TOTAL_CHILD NOF_USERS+NOF_WORKERS+1
 
@@ -76,7 +78,23 @@ int main() {
     create_process("../bin/erogatore", args3);
     
     //allarm(SIM_DURATION);
+    srand(time(NULL));
+    for(int i = 0; i < NOF_WORKERS_SEATS; i++){
+        double random = (double)rand() / RAND_MAX;
+
+        if(random > 0.25){
+            shared_data->sportelli[i] = rand() % NUM_SERV + 1;
+            init_sem(shared_data->risorse.semid, i, 1);
+        }
+        else{
+            shared_data->sportelli[i] = 0;
+            init_sem(shared_data->risorse.semid, i, 0);
+        }
+        printf("sportello %d = %d\n", i, shared_data->sportelli[i]);
+    }
+    
     sem_operation(sops, semid_dir, 0, 0, 0, 1);
+
 
     //kill(-pgid, SIGCONT);
     
