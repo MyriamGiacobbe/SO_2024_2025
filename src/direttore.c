@@ -44,7 +44,7 @@ int main() {
     //1. Inizializzazione risorse
     int shmid = create_shm(IPC_PRIVATE, sizeof(Data));
     shared_data = (Data*)attach_shm(shmid);
-    shared_data->risorse.semid = create_sem(IPC_PRIVATE, NOF_WORKERS_SEATS);
+    shared_data->risorse.semid = create_sem(IPC_PRIVATE, NUM_SERV);
     shared_data->risorse.qid = create_queue(IPC_PRIVATE);
 
     char semid_dir_str[8];
@@ -72,15 +72,17 @@ int main() {
     
     //allarm(SIM_DURATION);
     srand(time(NULL));
-    for(int i = 0; i < NOF_WORKERS_SEATS; i++){
+    
+    int count = NOF_WORKERS_SEATS;
+    for(int i = 0; i < NUM_SERV; i++){
         double random = (double)rand() / RAND_MAX;
 
-        if(random > 0.25){
-            shared_data->sportelli[i] = rand() % NUM_SERV + 1;
-            init_sem(shared_data->risorse.semid, i, 1);
+        if(random > 0.25 && count > 0){
+            int r = rand() % count + 1;
+            init_sem(shared_data->risorse.semid, i, r);
+            count -= r;
         }
         else{
-            shared_data->sportelli[i] = 0;
             init_sem(shared_data->risorse.semid, i, 0);
         }
     }

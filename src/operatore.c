@@ -9,8 +9,10 @@
 #include "common.h"
 
 int numPause = NOF_PAUSE;
+Data* datptr;
+struct sembuf sops;
 
-void goPause(int semid, int semnum) {
+void goPause(int semnum) {
 
     srand(time(NULL));
     double random = (double)rand() / RAND_MAX;
@@ -21,50 +23,27 @@ void goPause(int semid, int semnum) {
     if(numPause > 0){
         numPause--;
         printf("PAUSA\n");
-        release_sem(semid, semnum);
+        release_sem(datptr->risorse.semid, semnum);
     }
 }
 
-void startDay(struct sembuf sops, Data* datptr) {
-    int count = 0;
-    int occ[NOF_WORKERS_SEATS];
-    for(int i = 0; i < NOF_WORKERS_SEATS; i++) {
-        if(datptr->sportelli[i] == serv){
-            occ[count] = i;
-            printf("occ[%d] = %d\n", count, i);
-            count++;
-        }
-    }
-    
-    int i = 0;
-    while(1) {
-        if(i <= count) {
-            if(semctl(datptr->risorse.semid, occ[i], GETVAL) == 1){
-                reserve_sem(datptr->risorse.semid, occ[i]);
-                break;
-            }
-            i++;
-        } 
-        i = 0;
-    }
+void startDay(int serv) {
+    reserve_sem(datptr->risorse.semid, serv-1);
 
-    goPause(datptr->risorse.semid, i);
+    goPause(serv-1);
 }
 
 int main(int argc, char* argv[]) {
     srand(time(NULL) + getpid());
     int serv = rand() % NUM_SERV + 1;
-    
-    Data* datptr;
+
     datptr = (Data*)attach_shm(atoi(argv[2]));
-    
-    struct sembuf sops;
 
     reserve_sem(atoi(argv[1]), 0);
 
     sem_operation(sops, atoi(argv[1]), 0, 0, 0, 1);     //waitforzero -> aspetta l'inizializzazione di tutti i fratelli
 
-    startDay(sops, datptr);    
+    startDay(serv);    
 
     detach_shm(datptr);
 
