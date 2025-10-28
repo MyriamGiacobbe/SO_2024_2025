@@ -25,18 +25,7 @@ void goPause(int semid, int semnum) {
     }
 }
 
-int main(int argc, char* argv[]) {
-    srand(time(NULL) + getpid());
-    int serv = rand() % NUM_SERV + 1;
-
-    reserve_sem(atoi(argv[1]), 0);
-
-    struct sembuf sops;
-    sem_operation(sops, atoi(argv[1]), 0, 0, 0, 1);
-    
-    Data* datptr;
-    datptr = (Data*)attach_shm(atoi(argv[2]));
-
+void startDay(struct sembuf sops, Data* datptr) {
     int count = 0;
     int occ[NOF_WORKERS_SEATS];
     for(int i = 0; i < NOF_WORKERS_SEATS; i++) {
@@ -60,6 +49,22 @@ int main(int argc, char* argv[]) {
     }
 
     goPause(datptr->risorse.semid, i);
+}
+
+int main(int argc, char* argv[]) {
+    srand(time(NULL) + getpid());
+    int serv = rand() % NUM_SERV + 1;
+    
+    Data* datptr;
+    datptr = (Data*)attach_shm(atoi(argv[2]));
+    
+    struct sembuf sops;
+
+    reserve_sem(atoi(argv[1]), 0);
+
+    sem_operation(sops, atoi(argv[1]), 0, 0, 0, 1);     //waitforzero -> aspetta l'inizializzazione di tutti i fratelli
+
+    startDay(sops, datptr);    
 
     detach_shm(datptr);
 

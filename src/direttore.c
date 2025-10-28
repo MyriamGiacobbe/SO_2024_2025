@@ -85,7 +85,7 @@ int main() {
         }
     }
     
-    sem_operation(sops, semid_dir, 0, 0, 0, 1);
+    sem_operation(sops, semid_dir, 0, 0, 0, 1); //waitforzero -> aspetta che tutti i processi siano pronti
 
 
     //kill(-pgid, SIGCONT);
