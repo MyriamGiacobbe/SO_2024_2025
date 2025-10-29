@@ -28,6 +28,6 @@ void init_sem(int semid, int semnum, int val);
 void sem_operation(struct sembuf sops, int semid, int semnum, int semflg, int op, int nsem);
 void reserve_sem(int semid, int semnum);
 void release_sem(int semid, int semnum);
-void deleate_sem(int semid);
+void delete_sem(int semid);
 
 #endif

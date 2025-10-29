@@ -50,7 +50,7 @@ void release_sem(int semid, int semnum) {
     }
 }
 
-void deleate_sem(int semid) {
+void delete_sem(int semid) {
     if(semctl(semid, 0, IPC_RMID) == -1) {
         ERROR
         exit(EXIT_FAILURE);

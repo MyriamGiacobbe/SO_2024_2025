@@ -18,6 +18,27 @@
 #define TOTAL_CHILD NOF_USERS+NOF_WORKERS+1
 
 pid_t pgid;
+Data* shared_data;
+struct sembuf sops;
+
+void init_seats(){
+    srand(time(NULL));
+
+    
+    int count = NOF_WORKERS_SEATS;
+    for(int i = 0; i < NUM_SERV; i++){
+        double random = (double)rand() / RAND_MAX;
+
+        if(random > 0.25 && count > 0){
+            int r = rand() % count + 1;
+            init_sem(shared_data->risorse.semid, i, r);
+            count -= r;
+        }
+        else{
+            init_sem(shared_data->risorse.semid, i, 0);
+        }
+    }
+}
 
 void create_process(char* file_name, char* args[]) {
     pid_t pid = fork();
@@ -34,9 +55,8 @@ void create_process(char* file_name, char* args[]) {
 }
 
 int main() {
-    Data* shared_data;
     pgid = getpid();
-    struct sembuf sops;
+    
     int semid_dir = create_sem(IPC_PRIVATE, 1);
 
     init_sem(semid_dir, 0, TOTAL_CHILD);
@@ -71,32 +91,31 @@ int main() {
     create_process("../bin/erogatore", args3);
     
     //allarm(SIM_DURATION);
-    srand(time(NULL));
-    
-    int count = NOF_WORKERS_SEATS;
-    for(int i = 0; i < NUM_SERV; i++){
-        double random = (double)rand() / RAND_MAX;
-
-        if(random > 0.25 && count > 0){
-            int r = rand() % count + 1;
-            init_sem(shared_data->risorse.semid, i, r);
-            count -= r;
-        }
-        else{
-            init_sem(shared_data->risorse.semid, i, 0);
-        }
-    }
     
     sem_operation(sops, semid_dir, 0, 0, 0, 1); //waitforzero -> aspetta che tutti i processi siano pronti
 
+    struct timespec t_day;
+    t_day.tv_sec = 1;
+    t_day.tv_nsec = N_NANO_SECS;
 
-    //kill(-pgid, SIGCONT);
+    alarm(SIM_DURATION*60*24);
     
-    while(wait(NULL) > 0);
+    while(1){
+        if(nanosleep(&t_day, NULL) == 0){
+            kill(-pgid, SIGUSR1);
+            //rinizializzare sportelli
+            sem_operation(sops, semid_dir, 0, 0, NOF_WORKERS, 1); 
+            printf("Leggo le statistiche\n");
+            init_seats();
+        }  
+        break;
+    }
+    
+    
 
     printf("[PADRE] Tutto a posto\n");
 
-    deleate_sem(semid_dir);
+    delete_sem(semid_dir);
     remove_shm(shmid);
 
     return 0;

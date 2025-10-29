@@ -1,5 +1,5 @@
 #define SIM_DURATION  5
-#define N_NANO_SECS 5
+#define N_NANO_SECS 8000000
 #define EXPLODE_THRESHOLD 50
 #define NOF_USERS 3
 #define NOF_WORKERS 10
