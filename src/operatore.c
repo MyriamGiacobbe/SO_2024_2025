@@ -68,9 +68,12 @@ int main(int argc, char* argv[]) {
         if(flag_handler){
             flag_handler = 0;
             printf("Sto per iniziare una bellissima giornata\n");
-            release_sem(atoi(argv[1]), 0);
-            sem_operation(sops, atoi(argv[1]), 0, 0, NOF_WORKERS, 1);
+            reserve_sem(atoi(argv[1]), 0);
+            sem_operation(sops, atoi(argv[1]), 0, 0, 0, 1);
+            printf("Hanno tutti gestito il segnale\n");
+            sem_operation(sops, atoi(argv[1]), 0, 0, 1, 1);
             startDay(serv);
+            
         }
     }
 

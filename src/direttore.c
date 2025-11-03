@@ -92,7 +92,11 @@ int main() {
     
     //allarm(SIM_DURATION);
     
+    init_seats();
+
     sem_operation(sops, semid_dir, 0, 0, 0, 1); //waitforzero -> aspetta che tutti i processi siano pronti
+
+    init_sem(semid_dir, 0, NOF_WORKERS);
 
     struct timespec t_day;
     t_day.tv_sec = 1;
@@ -104,11 +108,12 @@ int main() {
         if(nanosleep(&t_day, NULL) == 0){
             kill(-pgid, SIGUSR1);
             //rinizializzare sportelli
-            sem_operation(sops, semid_dir, 0, 0, NOF_WORKERS, 1); 
+            sem_operation(sops, semid_dir, 0, 0, 0, 1); //waitforzero -> aspetta che gli operatori gestiscono il segnale
             printf("Leggo le statistiche\n");
             init_seats();
+            release_sem(semid_dir, 0);
         }  
-        break;
+        //break;
     }
     
     
