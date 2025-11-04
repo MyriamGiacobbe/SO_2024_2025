@@ -51,6 +51,7 @@ void startDay(int serv, int semid_seats) {
 
     while(!check_signal()){
         if(goPause(serv-1, semid_seats)){
+            //printf("Entroooooooo??????");
             break;
         }
         else{
@@ -83,7 +84,7 @@ int main(int argc, char* argv[]) {
     sigaction(SIGUSR1, &sa, NULL);
 
     reserve_sem(datptr->risorse.semid, 0);
-    sem_operation(sops, datptr->risorse.semid, 0, 0, 0, 3);     //waitforzero -> aspetta l'inizializzazione di tutti i fratelli
+    sem_operation(sops, datptr->risorse.semid, 0, 0, 0, 1);     //waitforzero -> aspetta l'inizializzazione di tutti i fratelli
     
     startDay(serv, atoi(argv[2]));    
 
@@ -91,16 +92,21 @@ int main(int argc, char* argv[]) {
         perror("segnale non bloccato.");
         exit(EXIT_FAILURE);
     }
-/*
-    while(flag_handler()){
+
+    if(flag_handler){
+        printf("Gestito segnale\n");
+        flag_handler = 0;
+        /*
         printf("Sto per iniziare una bellissima giornata\n");
         reserve_sem(datptr->risorse.semid, 1); //segnale in pending 
         sem_operation(sops, datptr->risorse.semid, 2, 0, 0, 1);
         printf("Hanno tutti gestito il segnale\n");
         sem_operation(sops, datptr->risorse.semid, 2, 0, 1, 1);
         startDay(serv);
-    }
-*/    
+        */
+    } else {
+        printf("NON gestisco il segnale\n");
+    } 
 
     detach_shm(datptr);
 
