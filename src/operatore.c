@@ -17,6 +17,19 @@ void endDay_handler(int signum){
     flag_handler = 1;
 }
 
+
+int check_signal(){
+    sigset_t pending_set;
+
+    if(sigpending(&pending_set) != 0){
+        perror("sigpending failed.");
+        exit(EXIT_FAILURE);
+    }
+
+    int is_pending = sigismember(&pending_set, SIGUSR1);
+    return is_pending;
+}
+
 int goPause(int semnum) {
 
     srand(time(NULL));
@@ -33,10 +46,10 @@ int goPause(int semnum) {
     }
 }
 
-void startDay(int serv) {
-    reserve_sem(datptr->risorse.semid, serv-1);
+void startDay(int serv, int semid_seats) {
+    reserve_sem(semid_seats, serv-1);
 
-    while(1){
+    while(!check_signal()){
         if(goPause(serv-1)){
             break;
         }
@@ -44,38 +57,50 @@ void startDay(int serv) {
             sleep(1);
         }
     }
+    release_sem(semid_seats, serv-1);
+    printf("Scrivo statistiche\n");
 }
 
 int main(int argc, char* argv[]) {
     srand(time(NULL) + getpid());
     int serv = rand() % NUM_SERV + 1;
 
-    datptr = (Data*)attach_shm(atoi(argv[2]));
-
-    reserve_sem(atoi(argv[1]), 0);
-
-    sem_operation(sops, atoi(argv[1]), 0, 0, 0, 1);     //waitforzero -> aspetta l'inizializzazione di tutti i fratelli
+    datptr = (Data*)attach_shm(atoi(argv[1]));
 
     struct sigaction sa;
+    sigset_t new_mask, old_mask; 
     bzero(&sa, sizeof(sa));
     sa.sa_handler = endDay_handler;
 
+    sigemptyset(&new_mask);
+    sigaddset(&new_mask, SIGUSR1);
+
+    if(sigprocmask(SIG_BLOCK, &new_mask, &old_mask) < 0){
+        perror("segnale non bloccato.");
+        exit(EXIT_FAILURE);
+    }
+    
     sigaction(SIGUSR1, &sa, NULL);
 
-    startDay(serv);    
+    reserve_sem(datptr->risorse.semid, 0);
+    sem_operation(sops, datptr->risorse.semid, 0, 0, 0, 3);     //waitforzero -> aspetta l'inizializzazione di tutti i fratelli
+    
+    startDay(serv, atoi(argv[2]));    
 
-    while(1){
-        if(flag_handler){
-            flag_handler = 0;
-            printf("Sto per iniziare una bellissima giornata\n");
-            reserve_sem(atoi(argv[1]), 0);
-            sem_operation(sops, atoi(argv[1]), 0, 0, 0, 1);
-            printf("Hanno tutti gestito il segnale\n");
-            sem_operation(sops, atoi(argv[1]), 0, 0, 1, 1);
-            startDay(serv);
-            
-        }
+    if(sigprocmask(SIG_SETMASK, &old_mask, NULL) < 0){
+        perror("segnale non bloccato.");
+        exit(EXIT_FAILURE);
     }
+/*
+    while(flag_handler()){
+        printf("Sto per iniziare una bellissima giornata\n");
+        reserve_sem(datptr->risorse.semid, 1); //segnale in pending 
+        sem_operation(sops, datptr->risorse.semid, 2, 0, 0, 1);
+        printf("Hanno tutti gestito il segnale\n");
+        sem_operation(sops, datptr->risorse.semid, 2, 0, 1, 1);
+        startDay(serv);
+    }
+*/    
 
     detach_shm(datptr);
 

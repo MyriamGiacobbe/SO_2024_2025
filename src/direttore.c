@@ -21,7 +21,7 @@ pid_t pgid;
 Data* shared_data;
 struct sembuf sops;
 
-void init_seats(){
+void init_seats(int semid){
     srand(time(NULL));
 
     
@@ -31,11 +31,11 @@ void init_seats(){
 
         if(random > 0.25 && count > 0){
             int r = rand() % count + 1;
-            init_sem(shared_data->risorse.semid, i, r);
+            init_sem(semid, i, r);
             count -= r;
         }
         else{
-            init_sem(shared_data->risorse.semid, i, 0);
+            init_sem(semid, i, 0);
         }
     }
 }
@@ -57,46 +57,46 @@ void create_process(char* file_name, char* args[]) {
 int main() {
     pgid = getpid();
     
-    int semid_dir = create_sem(IPC_PRIVATE, 1);
+    int semid_seats = create_sem(IPC_PRIVATE, NUM_SERV);
 
-    init_sem(semid_dir, 0, TOTAL_CHILD);
-    
     //1. Inizializzazione risorse
     int shmid = create_shm(IPC_PRIVATE, sizeof(Data));
     shared_data = (Data*)attach_shm(shmid);
-    shared_data->risorse.semid = create_sem(IPC_PRIVATE, NUM_SERV);
+    shared_data->risorse.semid = create_sem(IPC_PRIVATE, 3);
     shared_data->risorse.qid = create_queue(IPC_PRIVATE);
-
-    char semid_dir_str[8];
-    snprintf(semid_dir_str, 8, "%d", semid_dir);
-
+    
     char shmid_dir_str[8];
     snprintf(shmid_dir_str, 8, "%d", shmid);
+    
+    init_sem(shared_data->risorse.semid, 0, TOTAL_CHILD+1);
+    init_sem(shared_data->risorse.semid, 1, NOF_WORKERS);
+    init_sem(shared_data->risorse.semid, 2, 1);
+
+    init_seats(semid_seats);
+
+    char semid_str[8];
+    snprintf(semid_str, 8, "%d", semid_seats);
 
     pid_t pid;
 
     /*2.1 Creazione utenti*/
-    char* args1[] = {"utente", semid_dir_str, shmid_dir_str, NULL};
+    char* args1[] = {"utente", shmid_dir_str, NULL};
     for(int i = 0; i < NOF_USERS; i++) {
         create_process("../bin/utente", args1);
     }
 
     /*2.2 Creazione operatori*/
-    char* args2[] = {"operatore", semid_dir_str, shmid_dir_str, NULL};
+    char* args2[] = {"operatore", shmid_dir_str, semid_str, NULL};
     for(int i = 0; i < NOF_WORKERS; i++)
         create_process("../bin/operatore", args2);
 
     /*2.2 Creazione erogatore_ticket*/
-    char* args3[] = {"erogatore", semid_dir_str, shmid_dir_str, NULL};
+    char* args3[] = {"erogatore", shmid_dir_str, NULL};
     create_process("../bin/erogatore", args3);
     
     //allarm(SIM_DURATION);
-    
-    init_seats();
 
-    sem_operation(sops, semid_dir, 0, 0, 0, 1); //waitforzero -> aspetta che tutti i processi siano pronti
-
-    init_sem(semid_dir, 0, NOF_WORKERS);
+    sem_operation(sops, shared_data->risorse.semid, 0, 0, 1, 3); //waitforzero -> aspetta che tutti i processi siano pronti
 
     struct timespec t_day;
     t_day.tv_sec = 1;
@@ -104,23 +104,26 @@ int main() {
 
     alarm(SIM_DURATION*60*24);
     
-    while(1){
-        if(nanosleep(&t_day, NULL) == 0){
-            kill(-pgid, SIGUSR1);
-            //rinizializzare sportelli
-            sem_operation(sops, semid_dir, 0, 0, 0, 1); //waitforzero -> aspetta che gli operatori gestiscono il segnale
-            printf("Leggo le statistiche\n");
-            init_seats();
-            release_sem(semid_dir, 0);
-        }  
+    reserve_sem(shared_data->risorse.semid, 0);
+
+    //while(1){
+    if(nanosleep(&t_day, NULL) == 0){
+        kill(-pgid, SIGUSR1);
+        //rinizializzare sportelli
+        sem_operation(sops, shared_data->risorse.semid, 1, 0, 0, 3); //waitforzero -> aspetta che gli operatori gestiscono il segnale
+        printf("Leggo le statistiche\n");
+        init_seats(semid_seats);
+        reserve_sem(shared_data->risorse.semid, 2);
+    }  
         //break;
-    }
+//}
     
     
 
     printf("[PADRE] Tutto a posto\n");
 
-    delete_sem(semid_dir);
+    delete_sem(shared_data->risorse.semid);
+    delete_sem(semid_seats);
     remove_shm(shmid);
 
     return 0;
