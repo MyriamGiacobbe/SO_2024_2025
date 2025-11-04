@@ -30,7 +30,7 @@ int check_signal(){
     return is_pending;
 }
 
-int goPause(int semnum) {
+int goPause(int semnum, int semid_seats) {
 
     srand(time(NULL));
     double random = (double)rand() / RAND_MAX;
@@ -41,7 +41,7 @@ int goPause(int semnum) {
     if(numPause > 0){
         numPause--;
         printf("PAUSA\n");
-        release_sem(datptr->risorse.semid, semnum);
+        release_sem(semid_seats, semnum);
         return 1;
     }
 }
@@ -50,7 +50,7 @@ void startDay(int serv, int semid_seats) {
     reserve_sem(semid_seats, serv-1);
 
     while(!check_signal()){
-        if(goPause(serv-1)){
+        if(goPause(serv-1, semid_seats)){
             break;
         }
         else{
