@@ -15,11 +15,15 @@
 //#include "ipc/signals.h"
 
 
-#define TOTAL_CHILD NOF_USERS+NOF_WORKERS+1
+#define TOTAL_CHILD NOF_WORKERS
 
 pid_t pgid;
 Data* shared_data;
 struct sembuf sops;
+
+void endSim_handler(int signum){
+    kill(-pgid, SIGKILL);
+}
 
 void init_seats(int semid){
     srand(time(NULL));
@@ -35,7 +39,7 @@ void init_seats(int semid){
             count -= r;
         }
         else{
-            init_sem(semid, i, 0);
+            init_sem(semid, i, NUM_SERV+1);
         }
     }
 }
@@ -56,6 +60,13 @@ void create_process(char* file_name, char* args[]) {
 
 int main() {
     pgid = getpid();
+
+    struct sigaction sa;
+    struct sigaction salarm;
+    sa.sa_handler = SIG_IGN;
+    salarm.sa_handler = endSim_handler;
+    sigaction(SIGUSR1, &sa, NULL);
+    sigaction(SIGALRM, &salarm, NULL);
     
     int semid_seats = create_sem(IPC_PRIVATE, NUM_SERV);
 
@@ -69,9 +80,9 @@ int main() {
     char shmid_dir_str[8];
     snprintf(shmid_dir_str, 8, "%d", shmid);
     
-    init_sem(shared_data->risorse.semid, 0, TOTAL_CHILD+1);
-    init_sem(shared_data->risorse.semid, 1, NOF_WORKERS);
-    init_sem(shared_data->risorse.semid, 2, 1);
+    init_sem(shared_data->risorse.semid, 0, TOTAL_CHILD);  //tutti pronti
+    init_sem(shared_data->risorse.semid, 1, NOF_WORKERS);   //tutti hanno concluso giornata
+    init_sem(shared_data->risorse.semid, 2, 1);             //per iniziare nuova giornata
 
     init_seats(semid_seats);
 
@@ -81,45 +92,53 @@ int main() {
     
     pid_t pid;
     
-    /*2.1 Creazione utenti*/
+    /*2.1 Creazione utenti
     char* args1[] = {"utente", shmid_dir_str, NULL};
     for(int i = 0; i < NOF_USERS; i++) {
         create_process("../bin/utente", args1);
     }
+        */
     
     /*2.2 Creazione operatori*/
     char* args2[] = {"operatore", shmid_dir_str, semid_str, NULL};
     for(int i = 0; i < NOF_WORKERS; i++)
     create_process("../bin/operatore", args2);
 
-    /*2.2 Creazione erogatore_ticket*/
+    /*2.2 Creazione erogatore_ticket
     char* args3[] = {"erogatore", shmid_dir_str, NULL};
     create_process("../bin/erogatore", args3);
-
+*/
     //allarm(SIM_DURATION);
 
-    sem_operation(sops, shared_data->risorse.semid, 0, 0, 1, 1); //waitforzero -> aspetta che tutti i processi siano pronti
+    sem_operation(sops, shared_data->risorse.semid, 0, 0, 0, 1); //waitforzero -> aspetta che tutti i processi siano pronti
 
     
+    long nanosec_per_day = (long)N_NANO_SECS * 24 * 60; // 1440 * 8.000.000
     struct timespec t_day;
-    t_day.tv_sec = 1;
-    t_day.tv_nsec = N_NANO_SECS;
-    
-    alarm(SIM_DURATION*60*24);
-    
-    reserve_sem(shared_data->risorse.semid, 0);
+    t_day.tv_sec = nanosec_per_day / 1000000000;      // Risultato: 11
+    t_day.tv_nsec = nanosec_per_day % 1000000000;     // Risultato: 520000000    
 
-    //while(1){
-    if(nanosleep(&t_day, NULL) == 0){
-        kill(-pgid, SIGUSR1);
-        //rinizializzare sportelli
-        sem_operation(sops, shared_data->risorse.semid, 1, 0, 0, 1); //waitforzero -> aspetta che gli operatori gestiscono il segnale
-        printf("Leggo le statistiche\n");
-        init_seats(semid_seats);
-        reserve_sem(shared_data->risorse.semid, 2);
-    }  
+    alarm(((double)nanosec_per_day/1000000000)*SIM_DURATION);
+    
+    reserve_sem(shared_data->risorse.semid, 2);  //tutti iniziano giornata
+
+    while(1){
+        if(nanosleep(&t_day, NULL) == 0){
+            printf("Ho fatto nanna\n");
+            //printf("Sto per mandare il segnale\n");
+            kill(-pgid, SIGUSR1);
+            //rinizializzare sportelli
+            init_seats(semid_seats);
+            sem_operation(sops, shared_data->risorse.semid, 1, 0, 0, 1); //tutti finiscono giornata
+            printf("Leggo le statistiche\n");
+            
+            reserve_sem(shared_data->risorse.semid, 2);
+            release_sem(shared_data->risorse.semid, 2);  //ripristinare flag di inizio giornata
+    }
+
+    while(wait(NULL)>0);
         //break;
-//}
+    }
     
     
 
