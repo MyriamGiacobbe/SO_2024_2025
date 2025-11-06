@@ -46,17 +46,28 @@ int goPause(int semnum, int semid_seats) {
 }
 
 void startDay(int serv, int semid_seats) {
-    if(semctl(semid_seats, serv-1, GETVAL) >= NUM_SERV + 1){
+    flag_handler = 0;
+    /*if(semctl(semid_seats, serv-1, GETVAL) >= NUM_SERV + 1){
         if(sigprocmask(SIG_SETMASK, &old_mask, NULL) < 0){
             perror("segnale non sbloccato in startDay.");
             exit(EXIT_FAILURE);
         }
         return;
+    }*/
+    if(reserve_sem(semid_seats, serv-1) == -1){
+        if(errno == EINTR){
+            return;
+        }else{
+            ERROR
+        }
     }
-    reserve_sem(semid_seats, serv-1);
+    
+    if(sigprocmask(SIG_BLOCK, &new_mask, &old_mask) < 0){
+        perror("segnale non bloccato.");
+        exit(EXIT_FAILURE);
+    }
 
     int flag = 0;
-    flag_handler = 0;
     while(!check_signal()){
         if(!flag){
             flag = goPause(serv-1, semid_seats);
@@ -93,11 +104,6 @@ int main(int argc, char* argv[]) {
 
     sigemptyset(&new_mask);
     sigaddset(&new_mask, SIGUSR1);
-
-    if(sigprocmask(SIG_BLOCK, &new_mask, &old_mask) < 0){
-        perror("segnale non bloccato.");
-        exit(EXIT_FAILURE);
-    }
     
     sigaction(SIGUSR1, &sa, NULL);
 
@@ -111,11 +117,11 @@ int main(int argc, char* argv[]) {
     while(1){
         if(flag_handler) {
             //printf("Handler eseguito dentro startDay!\n");
-            //printf("Sto per iniziare una bellissima giornata\n");
+            printf("Sto per iniziare una bellissima giornata\n");
             reserve_sem(datptr->risorse.semid, 1); //segnale in pending 
             sem_operation(sops, datptr->risorse.semid, 2, 0, 0, 1);
             //printf("Arrivo sano e salvo\n");
-            release_sem(datptr->risorse.semid, 1); 
+            release_sem(datptr->risorse.semid, 1);
             startDay(serv, atoi(argv[2]));
         }
     }

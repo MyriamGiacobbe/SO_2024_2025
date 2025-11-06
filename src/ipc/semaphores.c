@@ -34,12 +34,9 @@ void sem_operation(struct sembuf sops, int semid, int semnum, int semflg, int op
     }    
 }
 
-void reserve_sem(int semid, int semnum) {
+int reserve_sem(int semid, int semnum) {
     struct sembuf sops = {semnum, -1, 0};
-    if(semop(semid, &sops, 1) == -1) {
-        ERROR
-        exit(EXIT_FAILURE);
-    }
+    return semop(semid, &sops, 1);
 }
 
 void release_sem(int semid, int semnum) {

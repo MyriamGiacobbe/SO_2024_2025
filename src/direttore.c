@@ -122,7 +122,7 @@ int main() {
     
     reserve_sem(shared_data->risorse.semid, 2);  //tutti iniziano giornata
 
-    while(1){
+    //while(1){
         if(nanosleep(&t_day, NULL) == 0){
             printf("Ho fatto nanna\n");
             //printf("Sto per mandare il segnale\n");
@@ -135,10 +135,7 @@ int main() {
             reserve_sem(shared_data->risorse.semid, 2);
             release_sem(shared_data->risorse.semid, 2);  //ripristinare flag di inizio giornata
     }
-
-    while(wait(NULL)>0);
-        //break;
-    }
+//}
     
     
 
