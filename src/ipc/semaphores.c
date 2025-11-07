@@ -8,7 +8,7 @@
 #include <sys/sem.h>
 
 int create_sem(key_t k, int nsems) {
-    int semid = semget(k, nsems, IPC_CREAT | IPC_EXCL | 0600);
+    int semid = semget(k, nsems, IPC_CREAT | 0600);
     if(semid == -1) {
         ERROR
         exit(EXIT_FAILURE);

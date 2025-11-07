@@ -25,6 +25,13 @@ void endSim_handler(int signum){
     kill(-pgid, SIGKILL);
 }
 
+void leggo_stat() {
+    printf("Operatori attivi durante il giorno: %d\n", shared_data->stat.n_op_attivi_giorno);
+    printf("Operatori attivi durante la simulazione: %d\n", shared_data->stat.n_op_attivi_sim);
+    printf("Pause effettuate durante il giorno: %d\n", shared_data->stat.n_pause_giorno);
+    printf("Pause effettuate durante la simulazione: %d\n", shared_data->stat.n_pause_sim);
+}
+
 void init_seats(int semid){
     //printf("[DEBUG - DIRETTORE] Sportelli rinizializzati\n");
     
@@ -62,6 +69,8 @@ void create_process(char* file_name, char* args[]) {
 int main() {
     pgid = getpid();
 
+    Statistiche stat = {0}; 
+
     struct sigaction sa;
     struct sigaction salarm;
     sa.sa_handler = SIG_IGN;
@@ -74,6 +83,8 @@ int main() {
     //1. Inizializzazione risorse
     int shmid = create_shm(IPC_PRIVATE, sizeof(Data));
     shared_data = (Data*)attach_shm(shmid);
+
+    shared_data->stat = stat;
     
     shared_data->risorse.semid = create_sem(IPC_PRIVATE, 3);
     shared_data->risorse.qid = create_queue(IPC_PRIVATE);
@@ -139,7 +150,7 @@ int main() {
 
         init_seats(semid_seats);
 
-        printf("Leggo le statistiche\n");
+        leggo_stat();
         
         reserve_sem(shared_data->risorse.semid, 2);
     }

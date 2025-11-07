@@ -8,7 +8,14 @@
 #include <time.h>
 #include "common.h"
 
+#define KEY 2025
+
 int numPause = NOF_PAUSE;
+
+int n_attivi_g = 0;
+int n_attivi_s = 0;
+int n_pause_g = 0;
+int n_pause_s = 0;
 
 Data* datptr;
 struct sembuf sops;
@@ -40,6 +47,10 @@ int goPause(int semnum, int semid_seats) {
         numPause--;
         //printf("PAUSA\n");
         release_sem(semid_seats, semnum);
+
+        n_pause_g += 1;
+        n_pause_s += 1;
+
         return 1;
     }
     return 0;
@@ -54,6 +65,9 @@ void startDay(int serv, int semid_seats) {
             ERROR
         }
     }
+
+    n_attivi_g += 1;
+    n_attivi_s += 1;
     
     if(sigprocmask(SIG_BLOCK, &new_mask, &old_mask) < 0){
         perror("segnale non bloccato.");
@@ -69,8 +83,6 @@ void startDay(int serv, int semid_seats) {
         }
     }
 
-    printf("Scrivo statistiche");
-
     if(sigprocmask(SIG_SETMASK, &old_mask, NULL) < 0){
         perror("segnale non sbloccato in startDay.");
         exit(EXIT_FAILURE);
@@ -81,6 +93,10 @@ void startDay(int serv, int semid_seats) {
 }
 
 int main(int argc, char* argv[]) {
+    int sem_stat = create_sem(KEY, 1);
+
+    init_sem(sem_stat, 0, 1);
+
     srand(time(NULL) + getpid());
     int serv = rand() % NUM_SERV + 1;
 
@@ -102,9 +118,21 @@ int main(int argc, char* argv[]) {
 
     while(1){
         if(flag_handler) {
+            printf("[DEBUG - OP] Scrivo statistiche\n");
+
+            reserve_sem(sem_stat, 0);
+            datptr->stat.n_op_attivi_giorno += n_attivi_g;
+            datptr->stat.n_op_attivi_sim += n_attivi_s;
+            datptr->stat.n_pause_giorno += n_pause_g;
+            datptr->stat.n_pause_sim += n_pause_s;
+            release_sem(sem_stat, 0);
+
             reserve_sem(datptr->risorse.semid, 1); //segnale gestito 
 
             sem_operation(sops, datptr->risorse.semid, 2, 0, 0, 1); //inizio nuova giornata
+
+            n_attivi_g = 0;
+            n_pause_g = 0;
 
             startDay(serv, atoi(argv[2]));
 
