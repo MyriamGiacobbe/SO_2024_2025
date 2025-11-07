@@ -2,7 +2,7 @@
 #define N_NANO_SECS 8000000
 #define EXPLODE_THRESHOLD 50
 #define NOF_USERS 3
-#define NOF_WORKERS 10
+#define NOF_WORKERS 5
 #define NOF_WORKERS_SEATS 7
 #define NOF_PAUSE 10
 #define P_SERV_MIN 0.2

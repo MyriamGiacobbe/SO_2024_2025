@@ -33,12 +33,12 @@ int goPause(int semnum, int semid_seats) {
     // srand(time(NULL));
     double random = (double)rand() / RAND_MAX;
 
-    if(random > 0.75)
+    if(random > 0.15)
         return 0;
     
     if(numPause > 0){
         numPause--;
-        //printf("PAUSA\n");
+        printf("PAUSA\n");
         release_sem(semid_seats, semnum);
         return 1;
     }
@@ -46,7 +46,8 @@ int goPause(int semnum, int semid_seats) {
 }
 
 void startDay(int serv, int semid_seats) {
-    flag_handler = 0;
+    printf("[DEBUG - OPERATORE] Inizio una nuova giornata\n");
+    
     /*if(semctl(semid_seats, serv-1, GETVAL) >= NUM_SERV + 1){
         if(sigprocmask(SIG_SETMASK, &old_mask, NULL) < 0){
             perror("segnale non sbloccato in startDay.");
@@ -69,10 +70,9 @@ void startDay(int serv, int semid_seats) {
 
     int flag = 0;
     while(!check_signal()){
+        sleep(5);
         if(!flag){
             flag = goPause(serv-1, semid_seats);
-            if(flag)
-                release_sem(semid_seats, serv-1);
         }
     }
     if(sigprocmask(SIG_SETMASK, &old_mask, NULL) < 0){
@@ -117,30 +117,21 @@ int main(int argc, char* argv[]) {
     while(1){
         if(flag_handler) {
             //printf("Handler eseguito dentro startDay!\n");
-            printf("Sto per iniziare una bellissima giornata\n");
             reserve_sem(datptr->risorse.semid, 1); //segnale in pending 
+
+            printf("[DEBUG - OPERATORE] Segnale di fine giornata gestito\n");
+
             sem_operation(sops, datptr->risorse.semid, 2, 0, 0, 1);
-            //printf("Arrivo sano e salvo\n");
-            release_sem(datptr->risorse.semid, 1);
+
+            printf("[DEBUG - OPERATORE] Posso iniziare\n");
+
             startDay(serv, atoi(argv[2]));
+
+            release_sem(datptr->risorse.semid, 1);
+
+            flag_handler = 0;
         }
     }
-    /*if(flag_handler){
-        printf("Gestito segnale\n");
-        flag_handler = 0;
-        /*
-        printf("Sto per iniziare una bellissima giornata\n");
-        reserve_sem(datptr->risorse.semid, 1); //segnale in pending 
-        sem_operation(sops, datptr->risorse.semid, 2, 0, 0, 1);
-        printf("Hanno tutti gestito il segnale\n");
-        sem_operation(sops, datptr->risorse.semid, 2, 0, 1, 1);
-        startDay(serv);
-        
-    } 
-    else {
-        printf("NON gestisco il segnale\n");
-    } 
-    */
 
     detach_shm(datptr);
 

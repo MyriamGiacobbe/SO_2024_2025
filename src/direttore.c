@@ -26,8 +26,9 @@ void endSim_handler(int signum){
 }
 
 void init_seats(int semid){
+    printf("[DEBUG - DIRETTORE] Sportelli rinizializzati\n");
+    
     srand(time(NULL));
-
     
     int count = NOF_WORKERS_SEATS;
     for(int i = 0; i < NUM_SERV; i++){
@@ -39,7 +40,7 @@ void init_seats(int semid){
             count -= r;
         }
         else{
-            init_sem(semid, i, NUM_SERV+1);
+            init_sem(semid, i, 0);
         }
     }
 }
@@ -89,8 +90,10 @@ int main() {
     
     char semid_str[8];
     snprintf(semid_str, 8, "%d", semid_seats);
+
+    printf("[DEBUG - DIRETTORE] risorse inizializzate\n");
     
-    pid_t pid;
+    //pid_t pid;
     
     /*2.1 Creazione utenti
     char* args1[] = {"utente", shmid_dir_str, NULL};
@@ -112,6 +115,7 @@ int main() {
 
     sem_operation(sops, shared_data->risorse.semid, 0, 0, 0, 1); //waitforzero -> aspetta che tutti i processi siano pronti
 
+    printf("[DEBUG - DIRETTORE] figli creati e pronti per iniziare sim\n");
     
     long nanosec_per_day = (long)N_NANO_SECS * 24 * 60; // 1440 * 8.000.000
     struct timespec t_day;
@@ -122,20 +126,26 @@ int main() {
     
     reserve_sem(shared_data->risorse.semid, 2);  //tutti iniziano giornata
 
-    //while(1){
-        if(nanosleep(&t_day, NULL) == 0){
-            printf("Ho fatto nanna\n");
+    printf("[DEBUG - DIRETTORE] è stato dato il via alla sim\n");
+
+    while(1){
+        if(!nanosleep(&t_day, NULL)){
+            release_sem(shared_data->risorse.semid, 2);  //ripristinare flag di inizio giornata
+
+            printf("[DEBUG - DIRETTORE] è passato il giorno\n");
             //printf("Sto per mandare il segnale\n");
             kill(-pgid, SIGUSR1);
             //rinizializzare sportelli
-            init_seats(semid_seats);
+
             sem_operation(sops, shared_data->risorse.semid, 1, 0, 0, 1); //tutti finiscono giornata
+
+            init_seats(semid_seats);
+
             printf("Leggo le statistiche\n");
             
             reserve_sem(shared_data->risorse.semid, 2);
-            release_sem(shared_data->risorse.semid, 2);  //ripristinare flag di inizio giornata
+        }
     }
-//}
     
     
 

@@ -1,62 +1,28 @@
-CC 		:= gcc
+CC = gcc
+explode: bin/direttore bin/operatore bin/utente bin/erogatore_ticket
+#timeout: bin/direttore_t
 
-DEX_F 	:= -DEXPLODE
-TIMEOUT	:= -DTIMEOUT
+CONFIG_EXPLODE = -DEXPLODE
+CONFIG_TIMEOUTE = -DTIMEOUT
 
-SDIR	:= src/
-IPC_DIR := $(SDIR)ipc/
-BIN_DIR := bin/
+INCLUDE = src/*.h src/ipc/*.h
 
-SRC 	:= $(SDIR)direttore.c $(SDIR)utente.c $(SDIR)operatore.c $(SDIR)erogatore_ticket.c
-IPC 	:= $(IPC_DIR)message_queue.c $(IPC_DIR)semaphores.c $(IPC_DIR)shared_memory.c #$(IPC_DIR)signals.c
-OBJ		:= $(SRC:$(SDIR)%.c=$(BIN_DIR)%.o)
-OBJ_IPC := $(IPC:$(IPC_DIR)%.c=$(BIN_DIR)%.o)
-TARGET  := $(BIN_DIR)direttore
+COMMON_DEPS = $(INCLUDE)
 
+build/%.o: src/%.c $(COMMON_DEPS)
+	$(CC) $(CONFIG_EXPLODE) -c $< -o $@
 
-.PHONY: all run clean   			#specifico che sono regole del makefile e non altro al di fuori
+bin/direttore: build/direttore.o build/operatore.o build/utente.o build/erogatore_ticket.o $(COMMON_DEPS)
+	$(CC) -o bin/direttore
 
-run: all
-	./$(TARGET)
+bin/operatore: build/operatore.o $(COMMON_DEPS)
+	$(CC) -o bin/operatore
 
-all: $(TARGET)
-	$(CC) $(BIN_DIR)direttore.o $(OBJ_IPC) -o $(TARGET)
-	$(CC) $(BIN_DIR)operatore.o $(OBJ_IPC) -o operatore.o 
-	$(CC) $(BIN_DIR)erogatore_ticket.o $(OBJ_IPC) -o erogatore_ticket.o 
-	$(CC) $(BIN_DIR)utente.o $(OBJ_IPC) -o utente.o
+bin/utente: build/utente.o $(COMMON_DEPS)
+	$(CC) -o bin/dutente
 
-$(BIN_DIR)%.o: $(IPC_DIR)%.c 							#regola per compilare tutti i .c in .o  $@=target $< = dipendenze
-	$(CC) -c $^ -o $@ 
-
-
-$(BIN_DIR)%.o: $(SDIR)%.c 							#regola per compilare tutti i .c in .o  $@=target $< = dipendenze
-	$(CC) -c $^ -o $@     	
-
+bin/erogatore_ticket: build/erogatore_ticket.o $(COMMON_DEPS)
+	$(CC) -o bin/erogatore_ticket
 
 clean:
-	rm -f bin/*
-	ipcrm
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	rm -f build/* bin/*
