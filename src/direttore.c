@@ -26,7 +26,7 @@ void endSim_handler(int signum){
 }
 
 void init_seats(int semid){
-    printf("[DEBUG - DIRETTORE] Sportelli rinizializzati\n");
+    //printf("[DEBUG - DIRETTORE] Sportelli rinizializzati\n");
     
     srand(time(NULL));
     
@@ -129,25 +129,20 @@ int main() {
     printf("[DEBUG - DIRETTORE] è stato dato il via alla sim\n");
 
     while(1){
-        if(!nanosleep(&t_day, NULL)){
-            release_sem(shared_data->risorse.semid, 2);  //ripristinare flag di inizio giornata
+        nanosleep(&t_day, NULL);
 
-            printf("[DEBUG - DIRETTORE] è passato il giorno\n");
-            //printf("Sto per mandare il segnale\n");
-            kill(-pgid, SIGUSR1);
-            //rinizializzare sportelli
+        release_sem(shared_data->risorse.semid, 2);  //ripristinare flag di inizio giornata
 
-            sem_operation(sops, shared_data->risorse.semid, 1, 0, 0, 1); //tutti finiscono giornata
+        kill(-pgid, SIGUSR1);
 
-            init_seats(semid_seats);
+        sem_operation(sops, shared_data->risorse.semid, 1, 0, 0, 1); //tutti finiscono giornata
 
-            printf("Leggo le statistiche\n");
-            
-            reserve_sem(shared_data->risorse.semid, 2);
-        }
+        init_seats(semid_seats);
+
+        printf("Leggo le statistiche\n");
+        
+        reserve_sem(shared_data->risorse.semid, 2);
     }
-    
-    
 
     printf("[PADRE] Tutto a posto\n");
 

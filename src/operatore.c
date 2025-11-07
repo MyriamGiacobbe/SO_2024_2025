@@ -9,6 +9,7 @@
 #include "common.h"
 
 int numPause = NOF_PAUSE;
+
 Data* datptr;
 struct sembuf sops;
 int flag_handler = 0;
@@ -30,15 +31,14 @@ int check_signal(){
 }
 
 int goPause(int semnum, int semid_seats) {
-    // srand(time(NULL));
     double random = (double)rand() / RAND_MAX;
 
-    if(random > 0.15)
+    if(random > 0.25)
         return 0;
     
     if(numPause > 0){
         numPause--;
-        printf("PAUSA\n");
+        //printf("PAUSA\n");
         release_sem(semid_seats, semnum);
         return 1;
     }
@@ -46,19 +46,11 @@ int goPause(int semnum, int semid_seats) {
 }
 
 void startDay(int serv, int semid_seats) {
-    printf("[DEBUG - OPERATORE] Inizio una nuova giornata\n");
     
-    /*if(semctl(semid_seats, serv-1, GETVAL) >= NUM_SERV + 1){
-        if(sigprocmask(SIG_SETMASK, &old_mask, NULL) < 0){
-            perror("segnale non sbloccato in startDay.");
-            exit(EXIT_FAILURE);
-        }
-        return;
-    }*/
     if(reserve_sem(semid_seats, serv-1) == -1){
         if(errno == EINTR){
             return;
-        }else{
+        } else{
             ERROR
         }
     }
@@ -72,26 +64,22 @@ void startDay(int serv, int semid_seats) {
     while(!check_signal()){
         sleep(5);
         if(!flag){
+            printf("Provo ad andare in pausa\n");
             flag = goPause(serv-1, semid_seats);
         }
     }
+
+    printf("Scrivo statistiche");
+
     if(sigprocmask(SIG_SETMASK, &old_mask, NULL) < 0){
         perror("segnale non sbloccato in startDay.");
         exit(EXIT_FAILURE);
     }
 
-    // Ora che il loop è finito, sblocchiamo il segnale
-    
-    // APPENA QUESTA RIGA FINISCE, l'handler viene eseguito
-    // e flag_handler viene impostato a 1 (se il segnale era pendente)
     if(!flag)
         release_sem(semid_seats, serv-1);
-    
-    // Ora puoi controllare il flag qui, se vuoi
-    
-    
-    //printf("Scrivo statistiche\n");
 }
+
 int main(int argc, char* argv[]) {
     srand(time(NULL) + getpid());
     int serv = rand() % NUM_SERV + 1;
@@ -110,24 +98,17 @@ int main(int argc, char* argv[]) {
     reserve_sem(datptr->risorse.semid, 0);                      //fine inizializzazione processo
     sem_operation(sops, datptr->risorse.semid, 2, 0, 0, 1);     //per iniziare giornata aspetta padre
     
-    startDay(serv, atoi(argv[2]));  
-
-    //printf("Qui tutto ok\n");
+    startDay(serv, atoi(argv[2]));
 
     while(1){
         if(flag_handler) {
-            //printf("Handler eseguito dentro startDay!\n");
-            reserve_sem(datptr->risorse.semid, 1); //segnale in pending 
+            reserve_sem(datptr->risorse.semid, 1); //segnale gestito 
 
-            printf("[DEBUG - OPERATORE] Segnale di fine giornata gestito\n");
-
-            sem_operation(sops, datptr->risorse.semid, 2, 0, 0, 1);
-
-            printf("[DEBUG - OPERATORE] Posso iniziare\n");
+            sem_operation(sops, datptr->risorse.semid, 2, 0, 0, 1); //inizio nuova giornata
 
             startDay(serv, atoi(argv[2]));
 
-            release_sem(datptr->risorse.semid, 1);
+            release_sem(datptr->risorse.semid, 1); //ripristino del semaforo di gestione handler
 
             flag_handler = 0;
         }
