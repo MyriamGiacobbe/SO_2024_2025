@@ -15,7 +15,7 @@
 //#include "ipc/signals.h"
 
 
-#define TOTAL_CHILD NOF_WORKERS + NOF_USERS
+#define TOTAL_CHILD NOF_WORKERS + NOF_USERS + 1
 
 pid_t pgid;
 Data* shared_data;
@@ -99,8 +99,6 @@ int main() {
     
     char semid_str[8];
     snprintf(semid_str, 8, "%d", semid_seats);
-
-    printf("[DEBUG - DIRETTORE] risorse inizializzate\n");
     
     //pid_t pid;
     
@@ -115,15 +113,13 @@ int main() {
     for(int i = 0; i < NOF_WORKERS; i++)
     create_process("../bin/operatore", args2);
 
-    /*2.2 Creazione erogatore_ticket
+    /*2.2 Creazione erogatore_ticket*/
     char* args3[] = {"erogatore", shmid_dir_str, NULL};
     create_process("../bin/erogatore", args3);
-*/
+
     //allarm(SIM_DURATION);
 
     sem_operation(sops, shared_data->risorse.semid, 0, 0, 0, 1); //waitforzero -> aspetta che tutti i processi siano pronti
-
-    printf("[DEBUG - DIRETTORE] figli creati e pronti per iniziare sim\n");
     
     long nanosec_per_day = (long)N_NANO_SECS * 24 * 60; // 1440 * 8.000.000
     struct timespec t_day;
@@ -133,8 +129,6 @@ int main() {
     //alarm(((double)nanosec_per_day/1000000000)*SIM_DURATION);
     
     reserve_sem(shared_data->risorse.semid, 2);  //tutti iniziano giornata
-
-    printf("[DEBUG - DIRETTORE] è stato dato il via alla sim\n");
 
     int count = 0;
     while(count < SIM_DURATION){

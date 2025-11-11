@@ -78,18 +78,17 @@ void startDay(int serv, int semid_seats) {
     while(!check_signal()){
         sleep(5);
         if(!flag){
-            printf("Provo ad andare in pausa\n");
             flag = goPause(serv-1, semid_seats);
         }
     }
+
+    if(!flag)
+        release_sem(semid_seats, serv-1);
 
     if(sigprocmask(SIG_SETMASK, &old_mask, NULL) < 0){
         perror("segnale non sbloccato in startDay.");
         exit(EXIT_FAILURE);
     }
-
-    if(!flag)
-        release_sem(semid_seats, serv-1);
 }
 
 int main(int argc, char* argv[]) {
@@ -118,7 +117,6 @@ int main(int argc, char* argv[]) {
 
     while(1){
         if(flag_handler) {
-            printf("[DEBUG - OP] Scrivo statistiche\n");
 
             reserve_sem(sem_stat, 0);
             datptr->stat.n_op_attivi_giorno += n_attivi_g;

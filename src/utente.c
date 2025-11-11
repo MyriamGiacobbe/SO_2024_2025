@@ -14,15 +14,11 @@ struct sembuf sops;
 int flag_handler = 0;
 sigset_t new_mask, old_mask;
 
-typedef struct {
-    int serv;
-} Messaggio;
-
 void endDay_handler(int signum){
     flag_handler = 1;
 }
 
-void startDay() {
+void startDay(int qid) {
     // scelta di andare
 
     double p_serv = (double)rand() / RAND_MAX;
@@ -30,10 +26,16 @@ void startDay() {
     if(p_serv < P_SERV_MIN || p_serv > P_SERV_MAX)
         return;
 
+    if(sigprocmask(SIG_BLOCK, &new_mask, &old_mask) < 0){
+        perror("segnale non bloccato.");
+        exit(EXIT_FAILURE);
+    }
+
+    struct message_t msg_snd;
+
     // scelta numero richieste di servizio
     
     int n_requests = rand() % N_REQUESTS + 1;
-    printf("n requests: %d\n", n_requests);
 
     int list_serv[n_requests];
     for(int i = 0; i < n_requests;) {
@@ -51,8 +53,6 @@ void startDay() {
         }   
     }
 
-    for(int i = 0; i < n_requests; i++) printf("list_serv[%d] = %d\n", i, list_serv[i]);
-
     // scelta orario
     int ora = rand() % 10;
 
@@ -61,17 +61,32 @@ void startDay() {
     t_hour.tv_sec = nanosec_per_hour / 1000000000;
     t_hour.tv_nsec = 0;
 
-    printf("Sto dormendo per %ld secondi\n", t_hour.tv_sec);
-
     // nanosleep
     nanosleep(&t_hour, NULL);
 
     // controllo esistenza servizio
-    int num_serv = list_serv[0]-1;
-    if(datptr->serv_erog[num_serv] == 0)
-        return;
+    for(int i = 0; i < n_requests; i++) {
+        int num_serv = list_serv[i];
+        if(datptr->serv_erog[num_serv-1] > 0) {
+            msg_snd.type_msg = 1;
+            msg_snd.pid = getpid();
+            
+            snprintf(msg_snd.msg, MSG_LENGTH, "%d", num_serv);
 
-    printf("Posso richiedere ticket per servizio %d\n", num_serv);
+            send_msg(qid, msg_snd);
+
+            struct message_t msg_rcv;
+
+            receive_msg(qid, msg_rcv, getpid());
+
+            printf("[UTENTE %d] Serv: %d, Time: %d\n", getpid(), num_serv, atoi(msg_rcv.msg));
+        }
+    }
+
+    if(sigprocmask(SIG_SETMASK, &old_mask, NULL) < 0){
+        perror("segnale non sbloccato in startDay.");
+        exit(EXIT_FAILURE);
+    }
 }
 
 int main(int argc, char* argv[]) {
@@ -81,19 +96,13 @@ int main(int argc, char* argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    int qid = create_queue(key);
-/*
-    int sem_erog = create_sem(key, 1);
-
-    init_sem(sem_erog, 0, 1);
+    int qid = create_queue(KEY_MSG);
 
     int sem_stat = create_sem(key, 1);
 
     init_sem(sem_stat, 0, 1);
-*/
-    datptr = (Data*)attach_shm(atoi(argv[1]));
 
-    printf("[DEBUG] attach shared memory\n");
+    datptr = (Data*)attach_shm(atoi(argv[1]));
     
     struct sigaction sa;
     bzero(&sa, sizeof(sa));
@@ -108,19 +117,13 @@ int main(int argc, char* argv[]) {
 
     reserve_sem(datptr->risorse.semid, 0);                      //fine inizializzazione processo
 
-    printf("[DEBUG] reserve_sem\n");
-
     sem_operation(sops, datptr->risorse.semid, 2, 0, 0, 1);     //per iniziare giornata aspetta padre
 
-    printf("[DEBUG] sem_operation\n");
-
     // decido se andare
-    startDay();
+    startDay(qid);
 
-    delete_queue(qid);
+    //delete_queue(qid);
     detach_shm(datptr);
-
-    printf("[UTENTE] Ora termino\n");
 
     return 0;
 }
