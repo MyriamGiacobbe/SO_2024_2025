@@ -15,15 +15,11 @@
 //#include "ipc/signals.h"
 
 
-#define TOTAL_CHILD NOF_WORKERS
+#define TOTAL_CHILD NOF_WORKERS + NOF_USERS
 
 pid_t pgid;
 Data* shared_data;
 struct sembuf sops;
-
-void endSim_handler(int signum){
-    kill(-pgid, SIGKILL);
-}
 
 void leggo_stat() {
     printf("Operatori attivi durante il giorno: %d\n", shared_data->stat.n_op_attivi_giorno);
@@ -44,10 +40,15 @@ void init_seats(int semid){
         if(random > 0.25 && count > 0){
             int r = rand() % count + 1;
             init_sem(semid, i, r);
+
+            shared_data->serv_erog[i] = r;
+
             count -= r;
         }
         else{
             init_sem(semid, i, 0);
+
+            shared_data->serv_erog[i] = 0;
         }
     }
 }
@@ -72,11 +73,8 @@ int main() {
     Statistiche stat = {0}; 
 
     struct sigaction sa;
-    struct sigaction salarm;
     sa.sa_handler = SIG_IGN;
-    salarm.sa_handler = endSim_handler;
     sigaction(SIGUSR1, &sa, NULL);
-    sigaction(SIGALRM, &salarm, NULL);
     
     int semid_seats = create_sem(IPC_PRIVATE, NUM_SERV);
 
@@ -92,7 +90,7 @@ int main() {
     char shmid_dir_str[8];
     snprintf(shmid_dir_str, 8, "%d", shmid);
     
-    init_sem(shared_data->risorse.semid, 0, TOTAL_CHILD);  //tutti pronti
+    init_sem(shared_data->risorse.semid, 0, TOTAL_CHILD);   //tutti pronti
     init_sem(shared_data->risorse.semid, 1, NOF_WORKERS);   //tutti hanno concluso giornata
     init_sem(shared_data->risorse.semid, 2, 1);             //per iniziare nuova giornata
 
@@ -106,12 +104,11 @@ int main() {
     
     //pid_t pid;
     
-    /*2.1 Creazione utenti
+    /* 2.1 Creazione utenti */
     char* args1[] = {"utente", shmid_dir_str, NULL};
     for(int i = 0; i < NOF_USERS; i++) {
         create_process("../bin/utente", args1);
     }
-        */
     
     /*2.2 Creazione operatori*/
     char* args2[] = {"operatore", shmid_dir_str, semid_str, NULL};
@@ -133,13 +130,14 @@ int main() {
     t_day.tv_sec = nanosec_per_day / 1000000000;      // Risultato: 11
     t_day.tv_nsec = nanosec_per_day % 1000000000;     // Risultato: 520000000    
 
-    alarm(((double)nanosec_per_day/1000000000)*SIM_DURATION);
+    //alarm(((double)nanosec_per_day/1000000000)*SIM_DURATION);
     
     reserve_sem(shared_data->risorse.semid, 2);  //tutti iniziano giornata
 
     printf("[DEBUG - DIRETTORE] è stato dato il via alla sim\n");
 
-    while(1){
+    int count = 0;
+    while(count < SIM_DURATION){
         nanosleep(&t_day, NULL);
 
         release_sem(shared_data->risorse.semid, 2);  //ripristinare flag di inizio giornata
@@ -153,7 +151,11 @@ int main() {
         leggo_stat();
         
         reserve_sem(shared_data->risorse.semid, 2);
+
+        count++;
     }
+
+    kill(-pgid, SIGKILL);
 
     printf("[PADRE] Tutto a posto\n");
 

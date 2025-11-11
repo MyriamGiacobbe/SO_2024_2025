@@ -2,7 +2,7 @@
 
 
 int create_queue(key_t k) {
-    int qid = msgget(k, IPC_CREAT | IPC_EXCL | 0600);
+    int qid = msgget(k, IPC_CREAT | 0600);
     if(qid == -1) {
         ERROR
         exit(EXIT_FAILURE);
