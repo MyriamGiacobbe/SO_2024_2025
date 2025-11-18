@@ -26,14 +26,18 @@ void endDay_handler(int signum){
     flag_handler = 1;
 }
 
-int check_signal(){
+int check_signal(int flag){
     sigset_t pending_set;
+    int is_pending;
 
     if(sigpending(&pending_set) != 0){
         perror("sigpending failed.");
         exit(EXIT_FAILURE);
     }
-    int is_pending = sigismember(&pending_set, SIGUSR1);
+    if(flag == 1)
+        is_pending = sigismember(&pending_set, SIGUSR1);
+    else
+        is_pending = sigismember(&pending_set, SIGUSR2);
     return is_pending;
 }
 
@@ -46,10 +50,7 @@ int goPause(int semnum, int semid_seats) {
     if(numPause > 0){
         numPause--;
         //printf("PAUSA\n");
-        release_sem(semid_seats, semnum);
-
-        n_pause_g += 1;
-        n_pause_s += 1;
+        
 
         return 1;
     }
@@ -75,11 +76,21 @@ void startDay(int serv, int semid_seats) {
     }
 
     int flag = 0;
-    while(!check_signal()){
-        sleep(5);
+    char msg[8];
+    while(!check_signal(1)){
+        read(pipefd[0], msg, 8);
         if(!flag){
             flag = goPause(serv-1, semid_seats);
+            if(flag){
+                release_sem(semid_seats, serv-1);
+                n_pause_g += 1;
+                n_pause_s += 1;
+            }
+            else{
+                release_sem(atoi(msg), serv);
+            }
         }
+        
     }
 
     if(!flag)
@@ -101,14 +112,18 @@ int main(int argc, char* argv[]) {
 
     datptr = (Data*)attach_shm(atoi(argv[1]));
 
-    struct sigaction sa;
-    bzero(&sa, sizeof(sa));
-    sa.sa_handler = endDay_handler;
+    struct sigaction sa_u1;
+    struct sigaction sa_u2;
+    bzero(&sa_u1, sizeof(sa_u1));
+    sa_u1.sa_handler = endDay_handler;
+    bzero(&sa_u2, sizeof(sa_u2));
+    sa_u2.sa_handler = SIG_IGN;
 
     sigemptyset(&new_mask);
     sigaddset(&new_mask, SIGUSR1);
+    sigaddset(&new_mask, SIGUSR2);
     
-    sigaction(SIGUSR1, &sa, NULL);
+    sigaction(SIGUSR1, &sa_u1, NULL);
 
     reserve_sem(datptr->risorse.semid, 0);                      //fine inizializzazione processo
     sem_operation(sops, datptr->risorse.semid, 2, 0, 0, 1);     //per iniziare giornata aspetta padre

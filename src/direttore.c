@@ -20,6 +20,8 @@
 pid_t pgid;
 Data* shared_data;
 struct sembuf sops;
+int pipefd[2];
+char buff_pipe[8];
 
 void leggo_stat() {
     printf("Operatori attivi durante il giorno: %d\n", shared_data->stat.n_op_attivi_giorno);
@@ -62,6 +64,14 @@ void create_process(char* file_name, char* args[]) {
 
     if(pid == 0) {
         setpgid(0, pgid);                   //per killarli tutti alla fine
+        if(strcmp(args[0], "utente")){
+            close(pipefd[0]);
+            snprintf(buff_pipe, 8, "%d", pipefd[1]);
+        }
+        if(strcmp(args[0], "operatore")){
+            close(pipefd[1]);
+            snprintf(buff_pipe, 8, "%d", pipefd[0]);
+        }
         execvp(file_name, args);
         perror("execvp");
     }
@@ -97,9 +107,16 @@ int main() {
 
     init_seats(semid_seats);
 
+    if(pipe(pipefd) == -1){
+        perror("pipe failed");
+        exit(EXIT_FAILURE);
+    }
     
     char semid_str[8];
     snprintf(semid_str, 8, "%d", semid_seats);
+
+    
+    
     
     //pid_t pid;
     

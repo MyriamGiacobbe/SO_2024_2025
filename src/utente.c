@@ -103,12 +103,13 @@ void startDay(int qid, int sem_seat) {
             end = clock();
 
             attesa = ((double)(end - start))/CLOCKS_PER_SEC;
-
             printf("[UTENTE %d] Ho atteso per %f secondi\n", getpid(), attesa);
 
             nanosleep(&t_hour, NULL);
-            
-            release_sem(sem_seat, num_serv);
+
+            char msg[8];
+            snprintf(msg, 8, "%d", sem_seat);
+            write(pipefd[1], msg, strlen(msg));
         }
     }
 
@@ -126,9 +127,6 @@ int main(int argc, char* argv[]) {
     }
 
     int qid = create_queue(KEY_MSG);
-
-    union semun arg;
-    arg.val = 1;
 
     int sem_size = NUM_SERV+1;
 

@@ -14,6 +14,7 @@
 #endif
 
 #define NUM_SERV 6
+#define UO_GROUP 
 
 typedef struct {
     int n_utenti_serviti[NUM_SERV];
