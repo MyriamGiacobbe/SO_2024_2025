@@ -1,28 +1,47 @@
 CC = gcc
-explode: bin/direttore bin/operatore bin/utente bin/erogatore_ticket
-#timeout: bin/direttore_t
 
-CONFIG_EXPLODE = -DEXPLODE
-CONFIG_TIMEOUTE = -DTIMEOUT
+DEF ?= EXPLODE  #di default fa partire l'Explode, se voglio altro: make DEF=TIMEOUT
+CFLAGS = -D$(DEF) -Wall -g 
 
-INCLUDE = src/*.h src/ipc/*.h
+BIN_DIR = bin
+SRC_DIR = src
+IPC_DIR = src/ipc
 
-COMMON_DEPS = $(INCLUDE)
+COMMON_OBJS =   $(BIN_DIR)/semaphores.o \
+				$(BIN_DIR)/message_queue.o \
+				$(BIN_DIR)/shared_memory.o 
 
-build/%.o: src/%.c $(COMMON_DEPS)
-	$(CC) $(CONFIG_EXPLODE) -c $< -o $@
+TARGETS =	$(BIN_DIR)/direttore \
+			$(BIN_DIR)/operatore \
+			$(BIN_DIR)/utente \
+			$(BIN_DIR)/erogatore
 
-bin/direttore: build/direttore.o build/operatore.o build/utente.o build/erogatore_ticket.o $(COMMON_DEPS)
-	$(CC) -o bin/direttore
+.PHONY: all clean run
 
-bin/operatore: build/operatore.o $(COMMON_DEPS)
-	$(CC) -o bin/operatore
+run: all
+	cd ./bin && ./direttore
 
-bin/utente: build/utente.o $(COMMON_DEPS)
-	$(CC) -o bin/dutente
+all: $(TARGETS)
 
-bin/erogatore_ticket: build/erogatore_ticket.o $(COMMON_DEPS)
-	$(CC) -o bin/erogatore_ticket
+# Qui è come creare gli eseguibili dai .o
+$(BIN_DIR)/direttore: $(BIN_DIR)/direttore.o $(COMMON_OBJS)
+		$(CC) $^ -o $@
 
-clean:
-	rm -f build/* bin/*
+$(BIN_DIR)/operatore: $(BIN_DIR)/operatore.o $(COMMON_OBJS)
+		$(CC) $^ -o $@
+
+$(BIN_DIR)/utente: $(BIN_DIR)/utente.o $(COMMON_OBJS)
+		$(CC) $^ -o $@
+
+$(BIN_DIR)/erogatore: $(BIN_DIR)/erogatore_ticket.o $(COMMON_OBJS)
+		$(CC) $^ -o $@
+
+# Qui è come creare i .o dai .c
+$(BIN_DIR)/%.o: $(SRC_DIR)/%.c
+		$(CC) $(CFLAGS) -c $< -o $@
+
+$(BIN_DIR)/%.o: $(IPC_DIR)/%.c
+		$(CC) $(CFLAGS) -c $< -o $@
+
+clean: 
+	rm -f $(TARGETS) $(BIN_DIR)/*.o
