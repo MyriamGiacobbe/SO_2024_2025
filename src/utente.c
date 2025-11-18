@@ -73,13 +73,19 @@ void startDay(int qid) {
             
             snprintf(msg_snd.msg, MSG_LENGTH, "%d", num_serv);
 
-            send_msg(qid, msg_snd);
+            send_msg(qid, &msg_snd);
 
             struct message_t msg_rcv;
+            
+/*
+            if(msgrcv(qid, &msg_rcv, MSG_LENGTH, getpid(), 0) < 0){
+                perror("msgrcv");
+                exit(EXIT_FAILURE);
+            }
+*/
+            receive_msg(qid, &msg_rcv, getpid());
 
-            receive_msg(qid, msg_rcv, getpid());
-
-            printf("[UTENTE %d] Serv: %d, Time: %d\n", getpid(), num_serv, atoi(msg_rcv.msg));
+            printf("[UTENTE %d] Serv: %d, Time: %s\n", getpid(), num_serv, msg_rcv.msg);
         }
     }
 
@@ -121,6 +127,25 @@ int main(int argc, char* argv[]) {
 
     // decido se andare
     startDay(qid);
+
+    while(1){
+        if(flag_handler) {
+
+            //reserve_sem(sem_stat, 0);
+            
+            //release_sem(sem_stat, 0);
+
+            reserve_sem(datptr->risorse.semid, 1); //segnale gestito 
+
+            sem_operation(sops, datptr->risorse.semid, 2, 0, 0, 1); //inizio nuova giornata
+
+            startDay(qid);
+
+            release_sem(datptr->risorse.semid, 1); //ripristino del semaforo di gestione handler
+
+            flag_handler = 0;
+        }
+    }
 
     //delete_queue(qid);
     detach_shm(datptr);

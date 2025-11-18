@@ -29,8 +29,8 @@ struct message_t{
 };
 
 int create_queue(key_t k);
-void send_msg(int qid, struct message_t msg);
-void receive_msg(int qid, struct message_t msg, long mtype);
+void send_msg(int qid, struct message_t *msg);
+void receive_msg(int qid, struct message_t *msg, long mtype);
 void delete_queue(int qid);
 
 #endif

@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <time.h>
+#include <sys/wait.h>
 #include "ipc/semaphores.h"
 #include "ipc/shared_memory.h"
 #include "ipc/message_queue.h"
@@ -9,27 +10,28 @@
 
 Data* datptr;
 struct sembuf sops;
-int flag_handler = 0;
 sigset_t new_mask, old_mask;
 
-/*
-int flag_handler = 0;
-
-void endDay_handler(int signum){
-    flag_handler = 1;
+void reap_child_handler(int signum) {
+    while(waitpid(-1, NULL, WNOHANG) > 0);
 }
-*/
+
 int eroga_ticket(int num_serv) {
     switch(num_serv) {
         case 1:
-            return (rand() % (15-5+1) + 5);
+            int time = (rand() % (15-5+1) + 5);
+            printf("eroga_ticket case 1: %d\n", time);
+            return time;
         case 2:
         case 4:
+            printf("eroga_ticket case 2,4\n");
             return (rand() % (12-4+1) + 4);
         case 3:
+            printf("eroga_ticket case 3\n");
             return (rand() % (9-3+1) + 3);
         case 5:
         case 6:
+            printf("eroga_ticket case 5,6\n");
             return (rand() % (30-10+1) + 10);
     }
 }
@@ -45,8 +47,13 @@ int main(int argc, char* argv[]) {
     struct sigaction sa;
     bzero(&sa, sizeof(sa));
     sa.sa_handler = SIG_IGN;
-    
     sigaction(SIGUSR1, &sa, NULL);
+
+    struct sigaction sa_chld;
+    bzero(&sa_chld, sizeof(sa_chld));
+    sa_chld.sa_handler = reap_child_handler;
+    sa_chld.sa_flags = SA_RESTART | SA_NOCLDSTOP;
+    sigaction(SIGCHLD, &sa_chld, NULL);
     
     srand(time(NULL) + getpid());
 
@@ -59,7 +66,16 @@ int main(int argc, char* argv[]) {
     printf("[DEBUG - EROGATORE] sem_operation\n");
 
     while(1) {
-        receive_msg(qid, msg_rcv, 0);
+        if(msgrcv(qid, &msg_rcv, MSG_LENGTH, 0, 0) < 0){
+            if(errno == EINTR)
+                continue;
+            else {
+                perror("msgrcv");
+                exit(EXIT_FAILURE);
+            }
+        }
+
+        printf("[DEBUG - EROGATORE] receive_msg\n");
 
         pid_t pid = fork();
         if(pid == -1) {
@@ -69,7 +85,7 @@ int main(int argc, char* argv[]) {
 
         if(pid == 0) {
             srand(time(NULL) + getpid());
-
+            
             struct message_t msg_snd;
             msg_snd.type_msg = msg_rcv.pid;
             msg_snd.pid = getpid();
@@ -78,7 +94,11 @@ int main(int argc, char* argv[]) {
 
             snprintf(msg_snd.msg, MSG_LENGTH, "%d", time);
 
-            send_msg(qid, msg_snd);
+            printf("[EROGATORE] %s\n", msg_snd.msg);
+
+            send_msg(qid, &msg_snd);
+
+            exit(EXIT_SUCCESS);
         }
     }
 

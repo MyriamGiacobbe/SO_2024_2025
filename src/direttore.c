@@ -73,6 +73,7 @@ int main() {
     Statistiche stat = {0}; 
 
     struct sigaction sa;
+    bzero(&sa, sizeof(sa));
     sa.sa_handler = SIG_IGN;
     sigaction(SIGUSR1, &sa, NULL);
     
@@ -111,7 +112,7 @@ int main() {
     /*2.2 Creazione operatori*/
     char* args2[] = {"operatore", shmid_dir_str, semid_str, NULL};
     for(int i = 0; i < NOF_WORKERS; i++)
-    create_process("../bin/operatore", args2);
+        create_process("../bin/operatore", args2);
 
     /*2.2 Creazione erogatore_ticket*/
     char* args3[] = {"erogatore", shmid_dir_str, NULL};
@@ -149,7 +150,7 @@ int main() {
         count++;
     }
 
-    kill(-pgid, SIGKILL);
+    kill(-pgid, SIGTERM);
 
     printf("[PADRE] Tutto a posto\n");
 

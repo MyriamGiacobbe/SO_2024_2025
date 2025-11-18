@@ -11,16 +11,16 @@ int create_queue(key_t k) {
     return qid;
 }
 
-void send_msg(int qid, struct message_t msg) {
-    if(msgsnd(qid, &msg, MSG_LENGTH, 0) < 0) {
+void send_msg(int qid, struct message_t *msg) {
+    if(msgsnd(qid, msg, MSG_LENGTH, 0) < 0) {
         ERROR
         exit(EXIT_FAILURE);
     }
 
 }
 
-void receive_msg(int qid, struct message_t msg, long mtype) {
-    if(msgrcv(qid, &msg, MSG_LENGTH, mtype, 0) < 0) {
+void receive_msg(int qid, struct message_t *msg, long mtype) {
+    if(msgrcv(qid, msg, MSG_LENGTH, mtype, 0) < 0) {
         ERROR
         exit(EXIT_FAILURE);
     }
