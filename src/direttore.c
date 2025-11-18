@@ -39,14 +39,14 @@ void init_seats(int semid){
 
         if(random > 0.25 && count > 0){
             int r = rand() % count + 1;
-            init_sem(semid, i, r);
+            init_sem(semid, i, SETVAL, r);
 
             shared_data->serv_erog[i] = r;
 
             count -= r;
         }
         else{
-            init_sem(semid, i, 0);
+            init_sem(semid, i, SETVAL, 0);
 
             shared_data->serv_erog[i] = 0;
         }
@@ -91,9 +91,9 @@ int main() {
     char shmid_dir_str[8];
     snprintf(shmid_dir_str, 8, "%d", shmid);
     
-    init_sem(shared_data->risorse.semid, 0, TOTAL_CHILD);   //tutti pronti
-    init_sem(shared_data->risorse.semid, 1, NOF_WORKERS);   //tutti hanno concluso giornata
-    init_sem(shared_data->risorse.semid, 2, 1);             //per iniziare nuova giornata
+    init_sem(shared_data->risorse.semid, 0, SETVAL, TOTAL_CHILD);   //tutti pronti
+    init_sem(shared_data->risorse.semid, 1, SETVAL, NOF_WORKERS);   //tutti hanno concluso giornata
+    init_sem(shared_data->risorse.semid, 2, SETVAL, 1);             //per iniziare nuova giornata
 
     init_seats(semid_seats);
 
