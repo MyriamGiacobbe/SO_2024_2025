@@ -18,7 +18,7 @@ void endDay_handler(int signum){
     flag_handler = 1;
 }
 
-void startDay(int qid) {
+void startDay(int qid, int sem_seat) {
     // scelta di andare
 
     double p_serv = (double)rand() / RAND_MAX;
@@ -86,6 +86,17 @@ void startDay(int qid) {
             receive_msg(qid, &msg_rcv, getpid());
 
             printf("[UTENTE %d] Serv: %d, Time: %s\n", getpid(), num_serv, msg_rcv.msg);
+
+            long nanosec_per_min = N_NANO_SECS * atol(msg_rcv.msg);
+            struct timespec t_hour;
+            t_hour.tv_sec = nanosec_per_min / 1000000000;
+            t_hour.tv_nsec = 0;
+
+            // nanosleep
+            reserve_sem(sem_seat, num_serv-1);
+            nanosleep(&t_hour, NULL);
+            printf("[UTENTE %d] Mi hanno servito\n", getpid());
+            release_sem(sem_seat, num_serv-1);
         }
     }
 
@@ -96,17 +107,26 @@ void startDay(int qid) {
 }
 
 int main(int argc, char* argv[]) {
-    int key;
-    if((key = ftok(".", 'U')) == -1) {
+    int key1;
+    if((key1 = ftok(".", 'U')) == -1) {
+        perror("ftok");
+        exit(EXIT_FAILURE);
+    }
+
+    int key2;
+    if((key2 = ftok(".", 'T')) == -1) {
         perror("ftok");
         exit(EXIT_FAILURE);
     }
 
     int qid = create_queue(KEY_MSG);
 
-    int sem_stat = create_sem(key, 1);
+    int sem_stat = create_sem(key1, 1);
 
     init_sem(sem_stat, 0, 1);
+
+    int sem_seat = create_sem(key2, NUM_SERV);
+    init_sem(sem_seat, NUM_SERV, SETALL, 1);
 
     datptr = (Data*)attach_shm(atoi(argv[1]));
     
@@ -126,7 +146,7 @@ int main(int argc, char* argv[]) {
     sem_operation(sops, datptr->risorse.semid, 2, 0, 0, 1);     //per iniziare giornata aspetta padre
 
     // decido se andare
-    startDay(qid);
+    startDay(qid, sem_seat);
 
     while(1){
         if(flag_handler) {
@@ -139,7 +159,7 @@ int main(int argc, char* argv[]) {
 
             sem_operation(sops, datptr->risorse.semid, 2, 0, 0, 1); //inizio nuova giornata
 
-            startDay(qid);
+            startDay(qid, sem_seat);
 
             release_sem(datptr->risorse.semid, 1); //ripristino del semaforo di gestione handler
 

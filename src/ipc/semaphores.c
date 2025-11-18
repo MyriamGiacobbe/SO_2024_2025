@@ -16,8 +16,8 @@ int create_sem(key_t k, int nsems) {
     return semid;
 }
 
-void init_sem(int semid, int semnum, int val) {
-    if(semctl(semid, semnum, SETVAL, val) == -1) {
+void init_sem(int semid, int semnum, int op, int val) {
+    if(semctl(semid, semnum, op, val) == -1) {
         ERROR
         exit(EXIT_FAILURE);
     }
