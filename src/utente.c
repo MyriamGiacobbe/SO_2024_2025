@@ -107,26 +107,23 @@ void startDay(int qid, int sem_seat) {
 }
 
 int main(int argc, char* argv[]) {
-    int key1;
-    if((key1 = ftok(".", 'U')) == -1) {
-        perror("ftok");
-        exit(EXIT_FAILURE);
-    }
-
-    int key2;
-    if((key2 = ftok(".", 'T')) == -1) {
+    int key;
+    if((key = ftok(".", 'U')) == -1) {
         perror("ftok");
         exit(EXIT_FAILURE);
     }
 
     int qid = create_queue(KEY_MSG);
 
-    int sem_stat = create_sem(key1, 1);
+    union semun arg;
+    arg.val = 1;
 
-    init_sem(sem_stat, 0, 1);
+    int semid = create_sem(key, NUM_SERV+1);
 
-    int sem_seat = create_sem(key2, NUM_SERV);
-    init_sem(sem_seat, NUM_SERV, SETALL, 1);
+    if(semctl(semid, NUM_SERV+1, SETALL, arg) == -1) {
+        perror("semctl");
+        exit(EXIT_FAILURE);
+    }
 
     datptr = (Data*)attach_shm(atoi(argv[1]));
     
@@ -146,7 +143,7 @@ int main(int argc, char* argv[]) {
     sem_operation(sops, datptr->risorse.semid, 2, 0, 0, 1);     //per iniziare giornata aspetta padre
 
     // decido se andare
-    startDay(qid, sem_seat);
+    startDay(qid, semid);
 
     while(1){
         if(flag_handler) {
@@ -159,7 +156,7 @@ int main(int argc, char* argv[]) {
 
             sem_operation(sops, datptr->risorse.semid, 2, 0, 0, 1); //inizio nuova giornata
 
-            startDay(qid, sem_seat);
+            startDay(qid, semid);
 
             release_sem(datptr->risorse.semid, 1); //ripristino del semaforo di gestione handler
 
