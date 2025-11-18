@@ -92,11 +92,23 @@ void startDay(int qid, int sem_seat) {
             t_hour.tv_sec = nanosec_per_min / 1000000000;
             t_hour.tv_nsec = 0;
 
+            clock_t start, end;
+            double attesa;
+
+            start = clock();
+
             // nanosleep
-            reserve_sem(sem_seat, num_serv-1);
+            reserve_sem(sem_seat, num_serv);
+
+            end = clock();
+
+            attesa = ((double)(end - start))/CLOCKS_PER_SEC;
+
+            printf("[UTENTE %d] Ho atteso per %f secondi\n", getpid(), attesa);
+
             nanosleep(&t_hour, NULL);
-            printf("[UTENTE %d] Mi hanno servito\n", getpid());
-            release_sem(sem_seat, num_serv-1);
+            
+            release_sem(sem_seat, num_serv);
         }
     }
 
@@ -118,12 +130,12 @@ int main(int argc, char* argv[]) {
     union semun arg;
     arg.val = 1;
 
-    int semid = create_sem(key, NUM_SERV+1);
+    int sem_size = NUM_SERV+1;
 
-    if(semctl(semid, NUM_SERV+1, SETALL, arg) == -1) {
-        perror("semctl");
-        exit(EXIT_FAILURE);
-    }
+    int semid = create_sem(key, sem_size);
+
+    for(int i = 0; i < sem_size; i++)
+        init_sem(semid, i, 1);
 
     datptr = (Data*)attach_shm(atoi(argv[1]));
     

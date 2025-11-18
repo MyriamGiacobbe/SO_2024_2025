@@ -23,7 +23,7 @@ union semun {
     unsigned short* array;
 };
 
-int create_sem(key_t k, int senum);
+int create_sem(key_t k, int nsems);
 void init_sem(int semid, int semnum, int val);
 void sem_operation(struct sembuf sops, int semid, int semnum, int semflg, int op, int nsem);
 int reserve_sem(int semid, int semnum);

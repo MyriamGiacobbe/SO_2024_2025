@@ -39,7 +39,7 @@ void init_seats(int semid){
 
         if(random > 0.25 && count > 0){
             int r = rand() % count + 1;
-            init_sem(semid, i, SETVAL, r);
+            init_sem(semid, i, r);
 
             shared_data->serv_erog[i] = r;
 
