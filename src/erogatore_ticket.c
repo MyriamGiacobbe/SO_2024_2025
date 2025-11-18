@@ -19,20 +19,17 @@ void reap_child_handler(int signum) {
 int eroga_ticket(int num_serv) {
     switch(num_serv) {
         case 1:
-            int time = (rand() % (15-5+1) + 5);
-            printf("eroga_ticket case 1: %d\n", time);
-            return time;
+            return (rand() % (15-5+1) + 5);
         case 2:
         case 4:
-            printf("eroga_ticket case 2,4\n");
             return (rand() % (12-4+1) + 4);
         case 3:
-            printf("eroga_ticket case 3\n");
             return (rand() % (9-3+1) + 3);
         case 5:
         case 6:
-            printf("eroga_ticket case 5,6\n");
             return (rand() % (30-10+1) + 10);
+        default:
+            return -1;
     }
 }
 
@@ -90,7 +87,11 @@ int main(int argc, char* argv[]) {
             msg_snd.type_msg = msg_rcv.pid;
             msg_snd.pid = getpid();
 
-            int time = eroga_ticket(atoi(msg_rcv.msg));
+            int time;
+            if ((time = eroga_ticket(atoi(msg_rcv.msg))) == -1) {
+                fprintf(stderr, "eroga_ticket failed\n");
+                exit(EXIT_FAILURE);
+            }
 
             snprintf(msg_snd.msg, MSG_LENGTH, "%d", time);
 
