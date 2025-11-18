@@ -94,7 +94,7 @@ void startDay(int serv, int semid_seats) {
 int main(int argc, char* argv[]) {
     int sem_stat = create_sem(KEY, 1);
 
-    init_sem(sem_stat, 0, 1);
+    init_sem(sem_stat, 0, SETVAL, 1);
 
     srand(time(NULL) + getpid());
     int serv = rand() % NUM_SERV + 1;
