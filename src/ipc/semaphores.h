@@ -24,7 +24,7 @@ union semun {
 };
 
 int create_sem(key_t k, int senum);
-void init_sem(int semid, int semnum, int op, int val);
+void init_sem(int semid, int semnum, int val);
 void sem_operation(struct sembuf sops, int semid, int semnum, int semflg, int op, int nsem);
 int reserve_sem(int semid, int semnum);
 void release_sem(int semid, int semnum);
