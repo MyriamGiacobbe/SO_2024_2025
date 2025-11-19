@@ -102,7 +102,7 @@ void startDay(int serv, int semid_seats, int qid) {
         msg_snd.type_msg = msg_rcv.pid;
         msg_snd.pid = getpid();
         
-        snprintf(msg_snd_to_op.msg, MSG_LENGTH, "FATTO");
+        snprintf(msg_snd.msg, MSG_LENGTH, "FATTO");
         send_msg(qid, &msg_snd);
     }
 
@@ -116,7 +116,7 @@ void startDay(int serv, int semid_seats, int qid) {
 }
 
 int main(int argc, char* argv[]) {
-    int qid = create_queue(KEY_MSG_UO);
+    int qid = create_queue(KEY_MSG);
 
     int sem_stat = create_sem(KEY, 1);
 
