@@ -42,15 +42,9 @@ int check_signal(int flag){
 
 int goPause(int semnum, int semid_seats) {
     double random = (double)rand() / RAND_MAX;
-
-    if(random > 0.25)
-        return 0;
     
-    if(numPause > 0){
+    if(numPause > 0 && random < 0.25){
         numPause--;
-        //printf("PAUSA\n");
-        
-
         return 1;
     }
     return 0;
@@ -59,11 +53,7 @@ int goPause(int semnum, int semid_seats) {
 void startDay(int serv, int semid_seats, int qid) {
     
     if(reserve_sem(semid_seats, serv-1) == -1){
-        if(errno == EINTR){
-            return;
-        } else{
-            ERROR
-        }
+        return;
     }
 
     n_attivi_g += 1;
@@ -79,24 +69,16 @@ void startDay(int serv, int semid_seats, int qid) {
 
     while(!check_signal(1)){
         
-        if(receive_msg(qid, &msg_rcv, getpid()) == -1);
+        if(receive_msg(qid, &msg_rcv, serv) == -1)
+            break;
         printf("[op]: sto servendo utente\n");
 
-        if(!flag){
-            flag = goPause(serv-1, semid_seats);
-            if(flag){
-                printf("[op]: vado in pausa\n");
-                release_sem(semid_seats, serv-1);
-                n_pause_g += 1;
-                n_pause_s += 1;
-            }
-        }
-
+        
         long nanosec_per_min = N_NANO_SECS * atol(msg_rcv.msg);
         struct timespec t_hour;
         t_hour.tv_sec = nanosec_per_min / 1000000000;
         t_hour.tv_nsec = 0;
-
+        
         nanosleep(&t_hour, NULL);
         printf("[op]: finito di servire, lo dico\n");
         msg_snd.type_msg = msg_rcv.pid;
@@ -105,10 +87,19 @@ void startDay(int serv, int semid_seats, int qid) {
         snprintf(msg_snd.msg, MSG_LENGTH, "FATTO");
         send_msg(qid, &msg_snd);
         printf("[op]: L'ho detto\n");
+        
+        if(!flag){
+            flag = goPause(serv-1, semid_seats);
+            if(flag){
+                printf("[op]: vado in pausa\n");
+                n_pause_g += 1;
+                n_pause_s += 1;
+                break;
+            }
+        }
     }
 
-    if(!flag)
-        release_sem(semid_seats, serv-1);
+    release_sem(semid_seats, serv-1);
 
     if(sigprocmask(SIG_SETMASK, &old_mask, NULL) < 0){
         perror("segnale non sbloccato in startDay.");
@@ -139,7 +130,12 @@ int main(int argc, char* argv[]) {
     sigaction(SIGUSR1, &sa_u1, NULL);
 
     reserve_sem(datptr->semid, 0);                      //fine inizializzazione processo
+
+    printf("[operatore %d] Sono inizializzato\n", getpid());
+
     sem_operation(sops, datptr->semid, 2, 0, 0, 1);     //per iniziare giornata aspetta padre
+
+    printf("[operatore %d] Inizio la prima giornata\n", getpid());
     
     startDay(serv, atoi(argv[2]), qid);
 

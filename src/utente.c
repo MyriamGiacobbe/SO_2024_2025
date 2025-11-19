@@ -88,7 +88,8 @@ void startDay(int qid, int semid) {
             snprintf(msg_snd_to_erog.msg, MSG_LENGTH, "%d", num_serv);
             send_msg(qid, &msg_snd_to_erog);
         
-            receive_msg(qid, &msg_rcv_from_erog, getpid());
+            if(receive_msg(qid, &msg_rcv_from_erog, getpid()) == -1)
+                break;
 
             long nanosec_per_min = N_NANO_SECS * atol(msg_rcv_from_erog.msg);
             struct timespec t_hour;
@@ -99,6 +100,8 @@ void startDay(int qid, int semid) {
             double attesa;
 
             start = clock();
+
+            reserve_sem(semid, num_serv);
 
             struct message_t msg_snd_to_op, msg_rcv_from_op;
 
@@ -113,6 +116,8 @@ void startDay(int qid, int semid) {
             end = clock();
 
             attesa = ((double)(end - start))/CLOCKS_PER_SEC;
+
+            release_sem(semid, num_serv);
 
             printf("[utente %d] Mi hanno servito in %f secondi\n", getpid(), attesa);
         }
@@ -155,7 +160,11 @@ int main(int argc, char* argv[]) {
 
     reserve_sem(datptr->semid, 0);                      //fine inizializzazione processo
 
+    printf("[utente %d] Sono inizializzato\n", getpid());
+
     sem_operation(sops, datptr->semid, 2, 0, 0, 1);     //per iniziare giornata aspetta padre
+
+    printf("[utente %d] Inizio la prima giornata\n", getpid());
 
     // decido se andare
     startDay(qid, semid);
@@ -170,6 +179,8 @@ int main(int argc, char* argv[]) {
             reserve_sem(datptr->semid, 1); //segnale gestito 
 
             sem_operation(sops, datptr->semid, 2, 0, 0, 1); //inizio nuova giornata
+
+            printf("[utente %d] Inizio l'ennesima giornata\n", getpid());
 
             startDay(qid, semid);
 

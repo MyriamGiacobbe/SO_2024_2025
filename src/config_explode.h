@@ -1,8 +1,8 @@
 #define SIM_DURATION  5
 #define N_NANO_SECS 8000000
 #define EXPLODE_THRESHOLD 50
-#define NOF_USERS 30
-#define NOF_WORKERS 15
+#define NOF_USERS 3
+#define NOF_WORKERS 5
 #define NOF_WORKERS_SEATS 7
 #define NOF_PAUSE 3
 #define P_SERV_MIN 0.2

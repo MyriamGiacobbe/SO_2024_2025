@@ -130,6 +130,8 @@ int main() {
     create_process("erogatore");
 
     sem_operation(sops, shared_data->semid, 0, 0, 0, 1); //waitforzero -> aspetta che tutti i processi siano pronti
+
+    printf("[direttore] Il bagno è libero e ora papà può andare a cagare\n");
     
     long nanosec_per_day = (long)N_NANO_SECS * 10 * 60; // 1440 * 8.000.000
     struct timespec t_day;
