@@ -22,6 +22,8 @@ Data* shared_data;
 struct sembuf sops;
 int pipefd[2];
 char buff_pipe[8];
+char semid_str[8];
+char shmid_dir_str[8];
 
 void leggo_stat() {
     printf("Operatori attivi durante il giorno: %d\n", shared_data->stat.n_op_attivi_giorno);
@@ -55,7 +57,9 @@ void init_seats(int semid){
     }
 }
 
-void create_process(char* file_name, char* args[]) {
+void create_process(char* file_name) {
+    char file_path[128];
+    snprintf(file_path, 128, "../bin/%s", file_name);
     pid_t pid = fork();
     if(pid == -1) {
         perror("fork");
@@ -64,16 +68,28 @@ void create_process(char* file_name, char* args[]) {
 
     if(pid == 0) {
         setpgid(0, pgid);                   //per killarli tutti alla fine
-        if(strcmp(args[0], "utente")){
+        if(strcmp(file_name, "utente") == 0){
             close(pipefd[0]);
             snprintf(buff_pipe, 8, "%d", pipefd[1]);
+            char* args[] = {file_name, shmid_dir_str, buff_pipe, NULL};
+            execvp(file_path, args);
+            perror("execvp utente");
+            exit(EXIT_FAILURE);
         }
-        if(strcmp(args[0], "operatore")){
+        else if(strcmp(file_name, "operatore") == 0){
             close(pipefd[1]);
             snprintf(buff_pipe, 8, "%d", pipefd[0]);
+            char* args[] = {file_name, shmid_dir_str, semid_str, buff_pipe, NULL};
+            execvp(file_path, args);
+            perror("execvp operatore");
+            exit(EXIT_FAILURE);
         }
-        execvp(file_name, args);
-        perror("execvp");
+        else{
+            char* args[] = {file_name, shmid_dir_str, NULL};
+            execvp(file_path, args);
+            perror("execvp erogatore");
+            exit(EXIT_FAILURE);
+        }
     }
 }
 
@@ -98,7 +114,7 @@ int main() {
     shared_data->risorse.semid = create_sem(IPC_PRIVATE, 3);
     shared_data->risorse.qid = create_queue(IPC_PRIVATE);
     
-    char shmid_dir_str[8];
+    
     snprintf(shmid_dir_str, 8, "%d", shmid);
     
     init_sem(shared_data->risorse.semid, 0, TOTAL_CHILD);   //tutti pronti
@@ -112,28 +128,25 @@ int main() {
         exit(EXIT_FAILURE);
     }
     
-    char semid_str[8];
+    
     snprintf(semid_str, 8, "%d", semid_seats);
-
-    
-    
     
     //pid_t pid;
     
     /* 2.1 Creazione utenti */
-    char* args1[] = {"utente", shmid_dir_str, NULL};
     for(int i = 0; i < NOF_USERS; i++) {
-        create_process("../bin/utente", args1);
+        create_process("utente");
     }
     
     /*2.2 Creazione operatori*/
-    char* args2[] = {"operatore", shmid_dir_str, semid_str, NULL};
     for(int i = 0; i < NOF_WORKERS; i++)
-        create_process("../bin/operatore", args2);
+        create_process("operatore");
 
     /*2.2 Creazione erogatore_ticket*/
-    char* args3[] = {"erogatore", shmid_dir_str, NULL};
-    create_process("../bin/erogatore", args3);
+    create_process("erogatore");
+
+    close(pipefd[0]);
+    close(pipefd[1]);
 
     //allarm(SIM_DURATION);
 

@@ -18,7 +18,7 @@ void endDay_handler(int signum){
     flag_handler = 1;
 }
 
-void startDay(int qid, int sem_seat) {
+void startDay(int qid, int sem_seat, int pipefd) {
     // scelta di andare
 
     double p_serv = (double)rand() / RAND_MAX;
@@ -109,7 +109,7 @@ void startDay(int qid, int sem_seat) {
 
             char msg[8];
             snprintf(msg, 8, "%d", sem_seat);
-            write(pipefd[1], msg, strlen(msg));
+            write(pipefd, msg, strlen(msg));
         }
     }
 
@@ -153,7 +153,7 @@ int main(int argc, char* argv[]) {
     sem_operation(sops, datptr->risorse.semid, 2, 0, 0, 1);     //per iniziare giornata aspetta padre
 
     // decido se andare
-    startDay(qid, semid);
+    startDay(qid, semid, atoi(argv[2]));
 
     while(1){
         if(flag_handler) {
@@ -166,7 +166,7 @@ int main(int argc, char* argv[]) {
 
             sem_operation(sops, datptr->risorse.semid, 2, 0, 0, 1); //inizio nuova giornata
 
-            startDay(qid, semid);
+            startDay(qid, semid, atoi(argv[2]));
 
             release_sem(datptr->risorse.semid, 1); //ripristino del semaforo di gestione handler
 

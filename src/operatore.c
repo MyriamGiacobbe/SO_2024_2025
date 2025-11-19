@@ -57,7 +57,7 @@ int goPause(int semnum, int semid_seats) {
     return 0;
 }
 
-void startDay(int serv, int semid_seats) {
+void startDay(int serv, int semid_seats, int pipefd) {
     
     if(reserve_sem(semid_seats, serv-1) == -1){
         if(errno == EINTR){
@@ -78,7 +78,7 @@ void startDay(int serv, int semid_seats) {
     int flag = 0;
     char msg[8];
     while(!check_signal(1)){
-        read(pipefd[0], msg, 8);
+        read(pipefd, msg, 8);
         if(!flag){
             flag = goPause(serv-1, semid_seats);
             if(flag){
@@ -128,7 +128,7 @@ int main(int argc, char* argv[]) {
     reserve_sem(datptr->risorse.semid, 0);                      //fine inizializzazione processo
     sem_operation(sops, datptr->risorse.semid, 2, 0, 0, 1);     //per iniziare giornata aspetta padre
     
-    startDay(serv, atoi(argv[2]));
+    startDay(serv, atoi(argv[2]), atoi(argv[3]));
 
     while(1){
         if(flag_handler) {
@@ -147,7 +147,7 @@ int main(int argc, char* argv[]) {
             n_attivi_g = 0;
             n_pause_g = 0;
 
-            startDay(serv, atoi(argv[2]));
+            startDay(serv, atoi(argv[2]), atoi(argv[3]));
 
             release_sem(datptr->risorse.semid, 1); //ripristino del semaforo di gestione handler
 
