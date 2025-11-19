@@ -75,11 +75,13 @@ void startDay(int serv, int semid_seats, int qid) {
     }
 
     int flag = 0;
-    struct message_t msg_rcv;
+    struct message_t msg_snd, msg_rcv;
 
     while(!check_signal(1)){
         
-        receive_msg(qid, &msg_rcv, getpid());
+        if(receive_msg(qid, &msg_rcv, getpid()) == -1) {
+            break;
+        }
 
         if(!flag){
             flag = goPause(serv-1, semid_seats);
@@ -88,9 +90,20 @@ void startDay(int serv, int semid_seats, int qid) {
                 n_pause_g += 1;
                 n_pause_s += 1;
             }
-
-            release_sem(atoi(msg_rcv.msg), serv);
         }
+
+        long nanosec_per_min = N_NANO_SECS * atol(msg_rcv.msg);
+        struct timespec t_hour;
+        t_hour.tv_sec = nanosec_per_min / 1000000000;
+        t_hour.tv_nsec = 0;
+
+        nanosleep(&t_hour, NULL);
+
+        msg_snd.type_msg = msg_rcv.pid;
+        msg_snd.pid = getpid();
+        
+        snprintf(msg_snd_to_op.msg, MSG_LENGTH, "FATTO");
+        send_msg(qid, &msg_snd);
     }
 
     if(!flag)

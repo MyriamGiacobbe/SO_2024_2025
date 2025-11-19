@@ -19,11 +19,14 @@ void send_msg(int qid, struct message_t *msg) {
 
 }
 
-void receive_msg(int qid, struct message_t *msg, long mtype) {
+int receive_msg(int qid, struct message_t *msg, long mtype) {
     if(msgrcv(qid, msg, MSG_LENGTH, mtype, 0) < 0) {
+        if(errno == EINTR)
+            return -1;
         ERROR
         exit(EXIT_FAILURE);
     }
+    return 0;
 }
 
 void delete_queue(int qid) {

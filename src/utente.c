@@ -32,7 +32,7 @@ int check_signal(){
     return is_pending;
 }
 
-void startDay(int qid_ue, int qid_uo, int semid) {
+void startDay(int qid, int semid) {
     // scelta di andare
 
     double p_serv = (double)rand() / RAND_MAX;
@@ -45,8 +45,7 @@ void startDay(int qid_ue, int qid_uo, int semid) {
         exit(EXIT_FAILURE);
     }
 
-    struct message_t msg_snd_to_erog;
-    struct message_t msg_snd_to_op;
+    struct message_t msg_snd_to_erog, msg_rcv_from_erog;
 
     // scelta numero richieste di servizio
     
@@ -83,18 +82,16 @@ void startDay(int qid_ue, int qid_uo, int semid) {
     for(int i = 0; i < n_requests && !check_signal(); i++) {
         int num_serv = list_serv[i];
         if(datptr->serv_erog[num_serv-1] > 0) {
-            msg_snd_to_erog.type_msg = 1;
+            msg_snd_to_erog.type_msg = NUM_SERV+1;
             msg_snd_to_erog.pid = getpid();
             
             snprintf(msg_snd_to_erog.msg, MSG_LENGTH, "%d", num_serv);
-
-            send_msg(qid_ue, &msg_snd_to_erog);
-
-            struct message_t msg_rcv;
+            send_msg(qid, &msg_snd_to_erog);
         
-            receive_msg(qid_ue, &msg_rcv, getpid());
+            if(receive_msg(qid, &msg_rcv_from_erog, getpid()) == -1)
+                break;
 
-            long nanosec_per_min = N_NANO_SECS * atol(msg_rcv.msg);
+            long nanosec_per_min = N_NANO_SECS * atol(msg_rcv_from_erog.msg);
             struct timespec t_hour;
             t_hour.tv_sec = nanosec_per_min / 1000000000;
             t_hour.tv_nsec = 0;
@@ -104,21 +101,22 @@ void startDay(int qid_ue, int qid_uo, int semid) {
 
             start = clock();
 
-            // nanosleep
-            reserve_sem(semid, num_serv);
+            nanosleep(&t_hour, NULL);
+
+            struct message_t msg_snd_to_op, msg_rcv_from_op;
+
+            msg_snd_to_op.type_msg = num_serv;
+            msg_snd_to_op.pid = getpid();
+            
+            snprintf(msg_snd_to_op.msg, MSG_LENGTH, "%d", msg_rcv_from_erog.msg);
+            send_msg(qid, &msg_snd_to_op);
+
+            if(receive_msg(qid, &msg_rcv_from_op, getpid()) == -1)
+                break;
 
             end = clock();
 
             attesa = ((double)(end - start))/CLOCKS_PER_SEC;
-
-            nanosleep(&t_hour, NULL);
-
-            msg_snd_to_op.type_msg = 1;
-            msg_snd_to_op.pid = getpid();
-            
-            snprintf(msg_snd_to_op.msg, MSG_LENGTH, "%d", semid);
-
-            send_msg(qid_uo, &msg_snd_to_op);
         }
     }
 
@@ -135,8 +133,7 @@ int main(int argc, char* argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    int qid_ue = create_queue(KEY_MSG_UE);
-    int qid_uo = create_queue(KEY_MSG_UO);
+    int qid = create_queue(KEY_MSG);
 
     int sem_size = NUM_SERV+1;
 
@@ -163,7 +160,7 @@ int main(int argc, char* argv[]) {
     sem_operation(sops, datptr->semid, 2, 0, 0, 1);     //per iniziare giornata aspetta padre
 
     // decido se andare
-    startDay(qid_ue, qid_uo, semid);
+    startDay(qid, semid);
 
     while(1){
         if(flag_handler) {
@@ -176,7 +173,7 @@ int main(int argc, char* argv[]) {
 
             sem_operation(sops, datptr->semid, 2, 0, 0, 1); //inizio nuova giornata
 
-            startDay(qid_ue, qid_uo, semid);
+            startDay(qid, semid);
 
             release_sem(datptr->semid, 1); //ripristino del semaforo di gestione handler
 

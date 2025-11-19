@@ -18,8 +18,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define KEY_MSG_UE 2025
-#define KEY_MSG_UO 2026
+#define KEY_MSG 2025
 
 #define MSG_LENGTH 120
 
@@ -31,7 +30,7 @@ struct message_t{
 
 int create_queue(key_t k);
 void send_msg(int qid, struct message_t *msg);
-void receive_msg(int qid, struct message_t *msg, long mtype);
+int receive_msg(int qid, struct message_t *msg, long mtype);
 void delete_queue(int qid);
 
 #endif
