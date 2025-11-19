@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
 
     struct message_t msg_rcv;
 
-    int qid = create_queue(KEY_MSG_UE);
+    int qid = create_queue(KEY_MSG);
 
     datptr = (Data*)attach_shm(atoi(argv[1]));
     
@@ -59,13 +59,8 @@ int main(int argc, char* argv[]) {
     sem_operation(sops, datptr->semid, 2, 0, 0, 1);     //per iniziare giornata aspetta padre
 
     while(1) {
-        if(msgrcv(qid, &msg_rcv, MSG_LENGTH, 0, 0) < 0){
-            if(errno == EINTR)
-                continue;
-            else {
-                perror("msgrcv");
-                exit(EXIT_FAILURE);
-            }
+        if(receive_msg(qid, &msg_rcv, NUM_SERV+1) == -1){
+            continue;
         }
 
         pid_t pid = fork();
