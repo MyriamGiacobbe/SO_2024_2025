@@ -80,10 +80,12 @@ void startDay(int serv, int semid_seats, int qid) {
     while(!check_signal(1)){
         
         if(receive_msg(qid, &msg_rcv, getpid()) == -1);
+        printf("[op]: sto servendo utente\n");
 
         if(!flag){
             flag = goPause(serv-1, semid_seats);
             if(flag){
+                printf("[op]: vado in pausa\n");
                 release_sem(semid_seats, serv-1);
                 n_pause_g += 1;
                 n_pause_s += 1;
@@ -96,12 +98,13 @@ void startDay(int serv, int semid_seats, int qid) {
         t_hour.tv_nsec = 0;
 
         nanosleep(&t_hour, NULL);
-
+        printf("[op]: finito di servire, lo dico\n");
         msg_snd.type_msg = msg_rcv.pid;
         msg_snd.pid = getpid();
         
         snprintf(msg_snd.msg, MSG_LENGTH, "FATTO");
         send_msg(qid, &msg_snd);
+        printf("[op]: L'ho detto\n");
     }
 
     if(!flag)
