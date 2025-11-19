@@ -34,10 +34,9 @@ int check_signal(int flag){
         perror("sigpending failed.");
         exit(EXIT_FAILURE);
     }
-    if(flag == 1)
-        is_pending = sigismember(&pending_set, SIGUSR1);
-    else
-        is_pending = sigismember(&pending_set, SIGUSR2);
+    
+    is_pending = sigismember(&pending_set, SIGUSR1);
+
     return is_pending;
 }
 
@@ -57,7 +56,7 @@ int goPause(int semnum, int semid_seats) {
     return 0;
 }
 
-void startDay(int serv, int semid_seats, int pipefd) {
+void startDay(int serv, int semid_seats, int qid) {
     
     if(reserve_sem(semid_seats, serv-1) == -1){
         if(errno == EINTR){
@@ -76,9 +75,12 @@ void startDay(int serv, int semid_seats, int pipefd) {
     }
 
     int flag = 0;
-    char msg[8];
+    struct message_t msg_rcv;
+
     while(!check_signal(1)){
-        read(pipefd, msg, 8);
+        
+        receive_msg(qid, &msg_rcv, getpid());
+
         if(!flag){
             flag = goPause(serv-1, semid_seats);
             if(flag){
@@ -86,11 +88,9 @@ void startDay(int serv, int semid_seats, int pipefd) {
                 n_pause_g += 1;
                 n_pause_s += 1;
             }
-            else{
-                release_sem(atoi(msg), serv);
-            }
+
+            release_sem(atoi(msg_rcv.msg), serv);
         }
-        
     }
 
     if(!flag)
@@ -103,6 +103,8 @@ void startDay(int serv, int semid_seats, int pipefd) {
 }
 
 int main(int argc, char* argv[]) {
+    int qid = create_queue(KEY_MSG_UO);
+
     int sem_stat = create_sem(KEY, 1);
 
     init_sem(sem_stat, 0, 1);
@@ -116,19 +118,16 @@ int main(int argc, char* argv[]) {
     struct sigaction sa_u2;
     bzero(&sa_u1, sizeof(sa_u1));
     sa_u1.sa_handler = endDay_handler;
-    bzero(&sa_u2, sizeof(sa_u2));
-    sa_u2.sa_handler = SIG_IGN;
 
     sigemptyset(&new_mask);
     sigaddset(&new_mask, SIGUSR1);
-    sigaddset(&new_mask, SIGUSR2);
     
     sigaction(SIGUSR1, &sa_u1, NULL);
 
-    reserve_sem(datptr->risorse.semid, 0);                      //fine inizializzazione processo
-    sem_operation(sops, datptr->risorse.semid, 2, 0, 0, 1);     //per iniziare giornata aspetta padre
+    reserve_sem(datptr->semid, 0);                      //fine inizializzazione processo
+    sem_operation(sops, datptr->semid, 2, 0, 0, 1);     //per iniziare giornata aspetta padre
     
-    startDay(serv, atoi(argv[2]), atoi(argv[3]));
+    startDay(serv, atoi(argv[2]), qid);
 
     while(1){
         if(flag_handler) {
@@ -140,16 +139,16 @@ int main(int argc, char* argv[]) {
             datptr->stat.n_pause_sim += n_pause_s;
             release_sem(sem_stat, 0);
 
-            reserve_sem(datptr->risorse.semid, 1); //segnale gestito 
+            reserve_sem(datptr->semid, 1); //segnale gestito 
 
-            sem_operation(sops, datptr->risorse.semid, 2, 0, 0, 1); //inizio nuova giornata
+            sem_operation(sops, datptr->semid, 2, 0, 0, 1); //inizio nuova giornata
 
             n_attivi_g = 0;
             n_pause_g = 0;
 
-            startDay(serv, atoi(argv[2]), atoi(argv[3]));
+            startDay(serv, atoi(argv[2]), qid);
 
-            release_sem(datptr->risorse.semid, 1); //ripristino del semaforo di gestione handler
+            release_sem(datptr->semid, 1); //ripristino del semaforo di gestione handler
 
             flag_handler = 0;
         }

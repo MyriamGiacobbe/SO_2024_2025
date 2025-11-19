@@ -20,8 +20,6 @@
 pid_t pgid;
 Data* shared_data;
 struct sembuf sops;
-int pipefd[2];
-char buff_pipe[8];
 char semid_str[8];
 char shmid_dir_str[8];
 
@@ -29,7 +27,7 @@ void leggo_stat() {
     printf("Operatori attivi durante il giorno: %d\n", shared_data->stat.n_op_attivi_giorno);
     printf("Operatori attivi durante la simulazione: %d\n", shared_data->stat.n_op_attivi_sim);
     printf("Pause effettuate durante il giorno: %d\n", shared_data->stat.n_pause_giorno);
-    printf("Pause effettuate durante la simulazione: %d\n", shared_data->stat.n_pause_sim);
+    printf("Pause effettuate durante la simulazione: %d\n\n", shared_data->stat.n_pause_sim);
 }
 
 void init_seats(int semid){
@@ -68,18 +66,8 @@ void create_process(char* file_name) {
 
     if(pid == 0) {
         setpgid(0, pgid);                   //per killarli tutti alla fine
-        if(strcmp(file_name, "utente") == 0){
-            close(pipefd[0]);
-            snprintf(buff_pipe, 8, "%d", pipefd[1]);
-            char* args[] = {file_name, shmid_dir_str, buff_pipe, NULL};
-            execvp(file_path, args);
-            perror("execvp utente");
-            exit(EXIT_FAILURE);
-        }
-        else if(strcmp(file_name, "operatore") == 0){
-            close(pipefd[1]);
-            snprintf(buff_pipe, 8, "%d", pipefd[0]);
-            char* args[] = {file_name, shmid_dir_str, semid_str, buff_pipe, NULL};
+        if(strcmp(file_name, "operatore") == 0){
+            char* args[] = {file_name, shmid_dir_str, semid_str, NULL};
             execvp(file_path, args);
             perror("execvp operatore");
             exit(EXIT_FAILURE);
@@ -87,13 +75,19 @@ void create_process(char* file_name) {
         else{
             char* args[] = {file_name, shmid_dir_str, NULL};
             execvp(file_path, args);
-            perror("execvp erogatore");
+            perror("execvp");
             exit(EXIT_FAILURE);
         }
     }
 }
 
 int main() {
+    key_t key;
+    if((key = ftok(".", 'D')) == -1) {
+        perror("ftok");
+        exit(EXIT_FAILURE);
+    }
+
     pgid = getpid();
 
     Statistiche stat = {0}; 
@@ -103,7 +97,7 @@ int main() {
     sa.sa_handler = SIG_IGN;
     sigaction(SIGUSR1, &sa, NULL);
     
-    int semid_seats = create_sem(IPC_PRIVATE, NUM_SERV);
+    int semid_seats = create_sem(key, NUM_SERV);
 
     //1. Inizializzazione risorse
     int shmid = create_shm(IPC_PRIVATE, sizeof(Data));
@@ -111,27 +105,17 @@ int main() {
 
     shared_data->stat = stat;
     
-    shared_data->risorse.semid = create_sem(IPC_PRIVATE, 3);
-    shared_data->risorse.qid = create_queue(IPC_PRIVATE);
-    
+    shared_data->semid = create_sem(key, 3);
     
     snprintf(shmid_dir_str, 8, "%d", shmid);
     
-    init_sem(shared_data->risorse.semid, 0, TOTAL_CHILD);   //tutti pronti
-    init_sem(shared_data->risorse.semid, 1, NOF_WORKERS);   //tutti hanno concluso giornata
-    init_sem(shared_data->risorse.semid, 2, 1);             //per iniziare nuova giornata
+    init_sem(shared_data->semid, 0, TOTAL_CHILD);   //tutti pronti
+    init_sem(shared_data->semid, 1, NOF_WORKERS+NOF_USERS);   //tutti hanno concluso giornata
+    init_sem(shared_data->semid, 2, 1);             //per iniziare nuova giornata
 
     init_seats(semid_seats);
-
-    if(pipe(pipefd) == -1){
-        perror("pipe failed");
-        exit(EXIT_FAILURE);
-    }
-    
     
     snprintf(semid_str, 8, "%d", semid_seats);
-    
-    //pid_t pid;
     
     /* 2.1 Creazione utenti */
     for(int i = 0; i < NOF_USERS; i++) {
@@ -145,47 +129,39 @@ int main() {
     /*2.2 Creazione erogatore_ticket*/
     create_process("erogatore");
 
-    close(pipefd[0]);
-    close(pipefd[1]);
-
-    //allarm(SIM_DURATION);
-
-    sem_operation(sops, shared_data->risorse.semid, 0, 0, 0, 1); //waitforzero -> aspetta che tutti i processi siano pronti
+    sem_operation(sops, shared_data->semid, 0, 0, 0, 1); //waitforzero -> aspetta che tutti i processi siano pronti
     
     long nanosec_per_day = (long)N_NANO_SECS * 24 * 60; // 1440 * 8.000.000
     struct timespec t_day;
     t_day.tv_sec = nanosec_per_day / 1000000000;      // Risultato: 11
     t_day.tv_nsec = nanosec_per_day % 1000000000;     // Risultato: 520000000    
-
-    //alarm(((double)nanosec_per_day/1000000000)*SIM_DURATION);
     
-    reserve_sem(shared_data->risorse.semid, 2);  //tutti iniziano giornata
+    reserve_sem(shared_data->semid, 2);  //tutti iniziano giornata
 
     int count = 0;
     while(count < SIM_DURATION){
         nanosleep(&t_day, NULL);
 
-        release_sem(shared_data->risorse.semid, 2);  //ripristinare flag di inizio giornata
+        release_sem(shared_data->semid, 2);  //ripristinare flag di inizio giornata
 
         kill(-pgid, SIGUSR1);
 
-        sem_operation(sops, shared_data->risorse.semid, 1, 0, 0, 1); //tutti finiscono giornata
+        sem_operation(sops, shared_data->semid, 1, 0, 0, 1); //tutti finiscono giornata
 
         init_seats(semid_seats);
 
         leggo_stat();
         
-        reserve_sem(shared_data->risorse.semid, 2);
+        reserve_sem(shared_data->semid, 2);
 
         count++;
     }
 
     kill(-pgid, SIGTERM);
 
-    printf("[PADRE] Tutto a posto\n");
-
-    delete_sem(shared_data->risorse.semid);
+    delete_sem(shared_data->semid);
     delete_sem(semid_seats);
+    detach_shm(shared_data);
     remove_shm(shmid);
 
     return 0;

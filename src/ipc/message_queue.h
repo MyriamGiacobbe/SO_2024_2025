@@ -18,7 +18,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define KEY_MSG 2025
+#define KEY_MSG_UE 2025
+#define KEY_MSG_UO 2026
 
 #define MSG_LENGTH 120
 

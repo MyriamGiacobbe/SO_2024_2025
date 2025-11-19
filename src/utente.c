@@ -18,7 +18,21 @@ void endDay_handler(int signum){
     flag_handler = 1;
 }
 
-void startDay(int qid, int sem_seat, int pipefd) {
+int check_signal(){
+    sigset_t pending_set;
+    int is_pending;
+
+    if(sigpending(&pending_set) != 0){
+        perror("sigpending failed.");
+        exit(EXIT_FAILURE);
+    }
+
+    is_pending = sigismember(&pending_set, SIGUSR1);
+
+    return is_pending;
+}
+
+void startDay(int qid_ue, int qid_uo, int semid) {
     // scelta di andare
 
     double p_serv = (double)rand() / RAND_MAX;
@@ -31,7 +45,8 @@ void startDay(int qid, int sem_seat, int pipefd) {
         exit(EXIT_FAILURE);
     }
 
-    struct message_t msg_snd;
+    struct message_t msg_snd_to_erog;
+    struct message_t msg_snd_to_op;
 
     // scelta numero richieste di servizio
     
@@ -65,27 +80,19 @@ void startDay(int qid, int sem_seat, int pipefd) {
     nanosleep(&t_hour, NULL);
 
     // controllo esistenza servizio
-    for(int i = 0; i < n_requests; i++) {
+    for(int i = 0; i < n_requests && !check_signal(); i++) {
         int num_serv = list_serv[i];
         if(datptr->serv_erog[num_serv-1] > 0) {
-            msg_snd.type_msg = 1;
-            msg_snd.pid = getpid();
+            msg_snd_to_erog.type_msg = 1;
+            msg_snd_to_erog.pid = getpid();
             
-            snprintf(msg_snd.msg, MSG_LENGTH, "%d", num_serv);
+            snprintf(msg_snd_to_erog.msg, MSG_LENGTH, "%d", num_serv);
 
-            send_msg(qid, &msg_snd);
+            send_msg(qid_ue, &msg_snd_to_erog);
 
             struct message_t msg_rcv;
-            
-/*
-            if(msgrcv(qid, &msg_rcv, MSG_LENGTH, getpid(), 0) < 0){
-                perror("msgrcv");
-                exit(EXIT_FAILURE);
-            }
-*/
-            receive_msg(qid, &msg_rcv, getpid());
-
-            printf("[UTENTE %d] Serv: %d, Time: %s\n", getpid(), num_serv, msg_rcv.msg);
+        
+            receive_msg(qid_ue, &msg_rcv, getpid());
 
             long nanosec_per_min = N_NANO_SECS * atol(msg_rcv.msg);
             struct timespec t_hour;
@@ -98,18 +105,20 @@ void startDay(int qid, int sem_seat, int pipefd) {
             start = clock();
 
             // nanosleep
-            reserve_sem(sem_seat, num_serv);
+            reserve_sem(semid, num_serv);
 
             end = clock();
 
             attesa = ((double)(end - start))/CLOCKS_PER_SEC;
-            printf("[UTENTE %d] Ho atteso per %f secondi\n", getpid(), attesa);
 
             nanosleep(&t_hour, NULL);
 
-            char msg[8];
-            snprintf(msg, 8, "%d", sem_seat);
-            write(pipefd, msg, strlen(msg));
+            msg_snd_to_op.type_msg = 1;
+            msg_snd_to_op.pid = getpid();
+            
+            snprintf(msg_snd_to_op.msg, MSG_LENGTH, "%d", semid);
+
+            send_msg(qid_uo, &msg_snd_to_op);
         }
     }
 
@@ -126,7 +135,8 @@ int main(int argc, char* argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    int qid = create_queue(KEY_MSG);
+    int qid_ue = create_queue(KEY_MSG_UE);
+    int qid_uo = create_queue(KEY_MSG_UO);
 
     int sem_size = NUM_SERV+1;
 
@@ -148,12 +158,12 @@ int main(int argc, char* argv[]) {
     
     srand(time(NULL) + getpid());
 
-    reserve_sem(datptr->risorse.semid, 0);                      //fine inizializzazione processo
+    reserve_sem(datptr->semid, 0);                      //fine inizializzazione processo
 
-    sem_operation(sops, datptr->risorse.semid, 2, 0, 0, 1);     //per iniziare giornata aspetta padre
+    sem_operation(sops, datptr->semid, 2, 0, 0, 1);     //per iniziare giornata aspetta padre
 
     // decido se andare
-    startDay(qid, semid, atoi(argv[2]));
+    startDay(qid_ue, qid_uo, semid);
 
     while(1){
         if(flag_handler) {
@@ -162,13 +172,13 @@ int main(int argc, char* argv[]) {
             
             //release_sem(sem_stat, 0);
 
-            reserve_sem(datptr->risorse.semid, 1); //segnale gestito 
+            reserve_sem(datptr->semid, 1); //segnale gestito 
 
-            sem_operation(sops, datptr->risorse.semid, 2, 0, 0, 1); //inizio nuova giornata
+            sem_operation(sops, datptr->semid, 2, 0, 0, 1); //inizio nuova giornata
 
-            startDay(qid, semid, atoi(argv[2]));
+            startDay(qid_ue, qid_uo, semid);
 
-            release_sem(datptr->risorse.semid, 1); //ripristino del semaforo di gestione handler
+            release_sem(datptr->semid, 1); //ripristino del semaforo di gestione handler
 
             flag_handler = 0;
         }

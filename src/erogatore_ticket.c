@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
 
     struct message_t msg_rcv;
 
-    int qid = create_queue(KEY_MSG);
+    int qid = create_queue(KEY_MSG_UE);
 
     datptr = (Data*)attach_shm(atoi(argv[1]));
     
@@ -54,13 +54,9 @@ int main(int argc, char* argv[]) {
     
     srand(time(NULL) + getpid());
 
-    reserve_sem(datptr->risorse.semid, 0);                      //fine inizializzazione processo
+    reserve_sem(datptr->semid, 0);                      //fine inizializzazione processo
 
-    printf("[DEBUG - EROGATORE] reserve_sem\n");
-
-    sem_operation(sops, datptr->risorse.semid, 2, 0, 0, 1);     //per iniziare giornata aspetta padre
-
-    printf("[DEBUG - EROGATORE] sem_operation\n");
+    sem_operation(sops, datptr->semid, 2, 0, 0, 1);     //per iniziare giornata aspetta padre
 
     while(1) {
         if(msgrcv(qid, &msg_rcv, MSG_LENGTH, 0, 0) < 0){
@@ -71,8 +67,6 @@ int main(int argc, char* argv[]) {
                 exit(EXIT_FAILURE);
             }
         }
-
-        printf("[DEBUG - EROGATORE] receive_msg\n");
 
         pid_t pid = fork();
         if(pid == -1) {
@@ -94,8 +88,6 @@ int main(int argc, char* argv[]) {
             }
 
             snprintf(msg_snd.msg, MSG_LENGTH, "%d", time);
-
-            printf("[EROGATORE] %s\n", msg_snd.msg);
 
             send_msg(qid, &msg_snd);
 

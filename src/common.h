@@ -29,16 +29,10 @@ typedef struct {
     double operatore_sportello_giorno;
 } Statistiche;
 
-typedef struct{
-    int qid;
-    int semid;
-} Risorse;
-
 typedef struct {
-    //pid_t pid[];
+    int semid;
     int serv_erog[NUM_SERV];
 	Statistiche stat;
-    Risorse risorse;
 } Data;
 
 
