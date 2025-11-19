@@ -88,8 +88,7 @@ void startDay(int qid, int semid) {
             snprintf(msg_snd_to_erog.msg, MSG_LENGTH, "%d", num_serv);
             send_msg(qid, &msg_snd_to_erog);
         
-            if(receive_msg(qid, &msg_rcv_from_erog, getpid()) == -1)
-                break;
+            receive_msg(qid, &msg_rcv_from_erog, getpid());
 
             long nanosec_per_min = N_NANO_SECS * atol(msg_rcv_from_erog.msg);
             struct timespec t_hour;
@@ -108,11 +107,10 @@ void startDay(int qid, int semid) {
             msg_snd_to_op.type_msg = num_serv;
             msg_snd_to_op.pid = getpid();
             
-            snprintf(msg_snd_to_op.msg, MSG_LENGTH, "%d", msg_rcv_from_erog.msg);
+            snprintf(msg_snd_to_op.msg, MSG_LENGTH, "%s", msg_rcv_from_erog.msg);
             send_msg(qid, &msg_snd_to_op);
 
-            if(receive_msg(qid, &msg_rcv_from_op, getpid()) == -1)
-                break;
+            receive_msg(qid, &msg_rcv_from_op, getpid());
 
             end = clock();
 

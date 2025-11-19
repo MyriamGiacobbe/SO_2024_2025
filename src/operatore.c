@@ -79,9 +79,7 @@ void startDay(int serv, int semid_seats, int qid) {
 
     while(!check_signal(1)){
         
-        if(receive_msg(qid, &msg_rcv, getpid()) == -1) {
-            break;
-        }
+        if(receive_msg(qid, &msg_rcv, getpid()) == -1);
 
         if(!flag){
             flag = goPause(serv-1, semid_seats);
