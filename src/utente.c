@@ -100,8 +100,6 @@ void startDay(int qid, int semid) {
 
             start = clock();
 
-            nanosleep(&t_hour, NULL);
-
             struct message_t msg_snd_to_op, msg_rcv_from_op;
 
             msg_snd_to_op.type_msg = num_serv;
@@ -115,6 +113,8 @@ void startDay(int qid, int semid) {
             end = clock();
 
             attesa = ((double)(end - start))/CLOCKS_PER_SEC;
+
+            printf("[utente %d] Mi hanno servito in %f secondi\n", getpid(), attesa);
         }
     }
 

@@ -131,7 +131,7 @@ int main() {
 
     sem_operation(sops, shared_data->semid, 0, 0, 0, 1); //waitforzero -> aspetta che tutti i processi siano pronti
     
-    long nanosec_per_day = (long)N_NANO_SECS * 24 * 60; // 1440 * 8.000.000
+    long nanosec_per_day = (long)N_NANO_SECS * 10 * 60; // 1440 * 8.000.000
     struct timespec t_day;
     t_day.tv_sec = nanosec_per_day / 1000000000;      // Risultato: 11
     t_day.tv_nsec = nanosec_per_day % 1000000000;     // Risultato: 520000000    
