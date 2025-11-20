@@ -32,18 +32,33 @@ int check_signal(){
     return is_pending;
 }
 
-void startDay(int qid, int semid) {
-    // scelta di andare
-
-    double p_serv = (double)rand() / RAND_MAX;
-    
-    if(p_serv < P_SERV_MIN || p_serv > P_SERV_MAX)
-        return;
-
+void block_signal() {
     if(sigprocmask(SIG_BLOCK, &new_mask, &old_mask) < 0){
         perror("segnale non bloccato.");
         exit(EXIT_FAILURE);
     }
+}
+
+void unblock_signal() {
+    if(sigprocmask(SIG_SETMASK, &old_mask, NULL) < 0){
+        perror("segnale non sbloccato in startDay.");
+        exit(EXIT_FAILURE);
+    }
+}
+
+void startDay(int qid, int semid) {
+    
+    // scelta di andare
+    double p_serv = (double)rand() / RAND_MAX;
+    
+    if(p_serv < P_SERV_MIN || p_serv > P_SERV_MAX) {
+        printf("[utente %d] Non vado alle poste\n", getpid());
+        return;
+    }
+
+    block_signal();
+
+    printf("[utente %d] Inizio l'ennesima giornata\n", getpid());
 
     struct message_t msg_snd_to_erog, msg_rcv_from_erog;
 
@@ -79,7 +94,7 @@ void startDay(int qid, int semid) {
     nanosleep(&t_hour, NULL);
 
     // controllo esistenza servizio
-    for(int i = 0; i < n_requests && !check_signal(); i++) {
+    for(int i = 0; i < n_requests && !check_signal() && !flag_handler; i++) {
         int num_serv = list_serv[i];
         if(datptr->serv_erog[num_serv-1] > 0) {
             msg_snd_to_erog.type_msg = NUM_SERV+1;
@@ -87,16 +102,25 @@ void startDay(int qid, int semid) {
             
             snprintf(msg_snd_to_erog.msg, MSG_LENGTH, "%d", num_serv);
             send_msg(qid, &msg_snd_to_erog);
-        
+            
+            unblock_signal();
+
             if(receive_msg(qid, &msg_rcv_from_erog, getpid()) == -1)
                 break;
+
+            block_signal();
+
+            printf("[utente %d] ticket erogato\n", getpid());
 
             clock_t start, end;
             double attesa;
 
             start = clock();
 
-            reserve_sem(semid, num_serv);
+            unblock_signal();
+
+            if(reserve_sem(semid, num_serv) == -1)
+                return;
 
             struct message_t msg_snd_to_op, msg_rcv_from_op;
 
@@ -106,7 +130,10 @@ void startDay(int qid, int semid) {
             snprintf(msg_snd_to_op.msg, MSG_LENGTH, "%s", msg_rcv_from_erog.msg);
             send_msg(qid, &msg_snd_to_op);
 
-            receive_msg(qid, &msg_rcv_from_op, getpid());
+            if (receive_msg(qid, &msg_rcv_from_op, getpid()) == -1)
+                break;
+
+            block_signal();
 
             end = clock();
 
@@ -118,13 +145,12 @@ void startDay(int qid, int semid) {
         }
     }
 
-    if(sigprocmask(SIG_SETMASK, &old_mask, NULL) < 0){
-        perror("segnale non sbloccato in startDay.");
-        exit(EXIT_FAILURE);
-    }
+    unblock_signal();
 }
 
 int main(int argc, char* argv[]) {
+    setbuf(stdout, NULL);
+
     int key;
     if((key = ftok(".", 'U')) == -1) {
         perror("ftok");
@@ -145,6 +171,7 @@ int main(int argc, char* argv[]) {
     struct sigaction sa;
     bzero(&sa, sizeof(sa));
     sa.sa_handler = endDay_handler;
+    sa.sa_flags = 0;
     
     sigemptyset(&new_mask);
     sigaddset(&new_mask, SIGUSR1);
@@ -159,12 +186,11 @@ int main(int argc, char* argv[]) {
 
     sem_operation(sops, datptr->semid, 2, 0, 0, 1);     //per iniziare giornata aspetta padre
 
-    printf("[utente %d] Inizio la prima giornata\n", getpid());
-
     // decido se andare
     startDay(qid, semid);
 
     while(1){
+        printf("[utente %d] flag_handler = %d\n", getpid(), flag_handler);
         if(flag_handler) {
 
             //reserve_sem(sem_stat, 0);
@@ -173,15 +199,16 @@ int main(int argc, char* argv[]) {
 
             reserve_sem(datptr->semid, 1); //segnale gestito 
 
+            printf("[utente %d] Segnale gestito\n", getpid());
+
             sem_operation(sops, datptr->semid, 2, 0, 0, 1); //inizio nuova giornata
 
-            printf("[utente %d] Inizio l'ennesima giornata\n", getpid());
-
+            flag_handler = 0;
+            
             startDay(qid, semid);
 
-            release_sem(datptr->semid, 1); //ripristino del semaforo di gestione handler
-
-            flag_handler = 0;
+        } else {
+            pause();
         }
     }
 

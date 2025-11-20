@@ -31,8 +31,6 @@ int check_signal(){
         exit(EXIT_FAILURE);
     }
 
-    printf("\n[DEBUG - OP %d] Segnale in pending %d\n", getpid(), sigismember(&pending_set, SIGUSR1));
-
     return sigismember(&pending_set, SIGUSR1);
 }
 
@@ -41,8 +39,6 @@ void block_signal() {
         perror("segnale non bloccato.");
         exit(EXIT_FAILURE);
     }
-
-    printf("\n[DEBUG - OP %d] Segnale bloccato\n", getpid());
 }
 
 void unblock_signal() {
@@ -50,8 +46,6 @@ void unblock_signal() {
         perror("segnale non sbloccato in startDay.");
         exit(EXIT_FAILURE);
     }
-
-    printf("\n[DEBUG - OP %d] Segnale sbloccato\n", getpid());
 }
 
 int goPause(int semnum, int semid_seats) {
@@ -66,18 +60,12 @@ int goPause(int semnum, int semid_seats) {
 
 void startDay(int serv, int semid_seats, int qid) {
 
-    printf("\n[DEBUG - OP %d] getval = %d, serv = %d\n", getpid(), semctl(semid_seats, serv-1, GETVAL), serv);
-
     if(flag_handler) return;
     
-    if(reserve_sem(semid_seats, serv-1) == -1){
-        printf("\n[DEBUG - OP %d] Segnale fine giornata scattato\n", getpid());
+    if(reserve_sem(semid_seats, serv-1) == -1)
         return;
-    }
 
     block_signal();
-
-    printf("\n[DEBUG - OP %d] Segnale fine giornata NON scattato, flag_handler = %d\n", getpid(), flag_handler);
 
     n_attivi_g ++;
     n_attivi_s ++;
@@ -86,12 +74,13 @@ void startDay(int serv, int semid_seats, int qid) {
     struct message_t msg_snd, msg_rcv;
 
     while(!check_signal() && !flag_handler){
-        //usleep(100000);
+
+        unblock_signal();
 
         if(receive_msg(qid, &msg_rcv, serv) == -1)
             break;
-        printf("[op]: sto servendo utente\n");
 
+        block_signal();
         
         long nanosec_per_min = N_NANO_SECS * atol(msg_rcv.msg);
         struct timespec t_hour;
@@ -99,7 +88,6 @@ void startDay(int serv, int semid_seats, int qid) {
         t_hour.tv_nsec = 0;
         
         nanosleep(&t_hour, NULL);
-        printf("[op]: finito di servire, lo dico\n");
         msg_snd.type_msg = msg_rcv.pid;
         msg_snd.pid = getpid();
         
@@ -107,7 +95,6 @@ void startDay(int serv, int semid_seats, int qid) {
         send_msg(qid, &msg_snd);
 
         if(goPause(serv-1, semid_seats)){
-            printf("\n[DEBUG - OP %d] Vado in pausa\n", getpid());
             n_pause_g ++;
             n_pause_s ++;
 
@@ -127,8 +114,6 @@ void startDay(int serv, int semid_seats, int qid) {
 int main(int argc, char* argv[]) {
     setbuf(stdout, NULL);
 
-    printf("\n[DEBUG - OP %d] Creato\n", getpid());
-
     int qid = create_queue(KEY_MSG);
 
     srand(time(NULL) + getpid());
@@ -146,24 +131,14 @@ int main(int argc, char* argv[]) {
     
     sigaction(SIGUSR1, &sa, NULL);
 
-    printf("\n[DEBUG - OP %d] Inizializzato\n", getpid());
-
     reserve_sem(datptr->semid, 0);                      //fine inizializzazione processo
-
-    printf("\n[DEBUG - OP %d] Pronto per iniziare\n", getpid());
 
     sem_operation(sops, datptr->semid, 2, 0, 0, 1);     //per iniziare giornata aspetta padre
     
     startDay(serv, atoi(argv[2]), qid);
 
-    printf("\n[DEBUG - OP %d] Finisco la prima giornata\n", getpid());
-
     while(1){
-        printf("\n[DEBUG - OP %d] flag_handler = %d\n", getpid(), flag_handler);
         if(flag_handler) {
-
-            printf("\n[DEBUG - OP %d] Segnale di fine giornata\n", getpid());
-
             reserve_sem(datptr->semid, 3);
             datptr->stat.n_op_attivi_giorno += n_attivi_g;
             datptr->stat.n_op_attivi_sim += n_attivi_s;

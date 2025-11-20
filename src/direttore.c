@@ -118,9 +118,11 @@ int main() {
     
     snprintf(shmid_str, 32, "%d", shmid);
     snprintf(semid_str, 32, "%d", semid_seats);
+
+    printf("\n[DEBUG - DIR] TOTAL_CHILD = %d, WORKERS_USERS = %d\n", TOTAL_CHILD, WORKERS_USERS);
     
     init_sem(shared_data->semid, 0, TOTAL_CHILD);       //Barriera iniziale
-    init_sem(shared_data->semid, 1, WORKERS_USERS);       //Barriera fine giornata
+    init_sem(shared_data->semid, 1, WORKERS_USERS);     //Barriera fine giornata
     init_sem(shared_data->semid, 2, 1);                 //Semaforo start giornata (rosso/verde)
     init_sem(shared_data->semid, 3, 1);                 //MUTEX per le statistiche
 
@@ -163,7 +165,6 @@ int main() {
 
         printf("\n[DEBUG - DIR] Inviato segnale di fine giornata\n");
 
-
         sem_operation(sops, shared_data->semid, 1, 0, 0, 1); //tutti finiscono giornata
 
         printf("\n[DEBUG - DIR] Fine giornata %d\n", count+1);
@@ -171,10 +172,11 @@ int main() {
 
         init_seats(semid_seats);
 
-        //leggo_stat();
-        printf("\n[DEBUG - DIR] Lette statistiche\n");
+        printf("\n");
+        leggo_stat();
+        printf("\n");
 
-        init_sem(shared_data->semid, 1, NOF_WORKERS);
+        init_sem(shared_data->semid, 1, WORKERS_USERS);
 
         reserve_sem(shared_data->semid, 2);
 
