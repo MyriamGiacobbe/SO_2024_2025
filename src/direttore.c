@@ -18,6 +18,8 @@
 #define TOTAL_CHILD NOF_WORKERS + NOF_USERS + 1
 #define WORKERS_USERS NOF_WORKERS + NOF_USERS
 
+int count = 1;
+
 pid_t pgid;
 Data* shared_data;
 struct sembuf sops;
@@ -26,8 +28,15 @@ char shmid_str[32];
 
 void leggo_stat() {
     printf("Operatori attivi durante il giorno: %d\n", shared_data->stat.n_op_attivi_giorno);
+
+    shared_data->stat.n_op_attivi_giorno = 0;
+
     printf("Operatori attivi durante la simulazione: %d\n", shared_data->stat.n_op_attivi_sim);
-    printf("Pause effettuate durante il giorno: %d\n", shared_data->stat.n_pause_giorno);
+
+    printf("Pause effettuate durante il giorno: %f\n", (double)shared_data->stat.n_pause_giorno/NOF_WORKERS);
+
+    shared_data->stat.n_pause_giorno = 0;
+
     printf("Pause effettuate durante la simulazione: %d\n\n", shared_data->stat.n_pause_sim);
 }
 
@@ -155,8 +164,7 @@ int main() {
 
     printf("\n[DEBUG - DIR] Avvio prima giornata\n");
 
-    int count = 0;
-    while(count < SIM_DURATION){
+    while(count <= SIM_DURATION){
         nanosleep(&t_day, NULL);
 
         release_sem(shared_data->semid, 2);  //ripristinare flag di inizio giornata
@@ -167,7 +175,7 @@ int main() {
 
         sem_operation(sops, shared_data->semid, 1, 0, 0, 1); //tutti finiscono giornata
 
-        printf("\n[DEBUG - DIR] Fine giornata %d\n", count+1);
+        printf("\n[DEBUG - DIR] Fine giornata %d\n", count);
 
 
         init_seats(semid_seats);

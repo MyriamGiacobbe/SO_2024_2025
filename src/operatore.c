@@ -12,7 +12,7 @@
 
 int numPause = NOF_PAUSE;
 
-int n_attivi_g = 0, n_attivi_s = 0, n_pause_g = 0, n_pause_s = 0;
+int n_attivi = 0, n_pause = 0;
 volatile sig_atomic_t flag_handler = 0;
 
 Data* datptr;
@@ -67,9 +67,7 @@ void startDay(int serv, int semid_seats, int qid) {
 
     block_signal();
 
-    n_attivi_g ++;
-    n_attivi_s ++;
-
+    n_attivi ++;
 
     struct message_t msg_snd, msg_rcv;
 
@@ -95,8 +93,7 @@ void startDay(int serv, int semid_seats, int qid) {
         send_msg(qid, &msg_snd);
 
         if(goPause(serv-1, semid_seats)){
-            n_pause_g ++;
-            n_pause_s ++;
+            n_pause++;
 
             release_sem(semid_seats, serv-1);
 
@@ -140,18 +137,18 @@ int main(int argc, char* argv[]) {
     while(1){
         if(flag_handler) {
             reserve_sem(datptr->semid, 3);
-            datptr->stat.n_op_attivi_giorno += n_attivi_g;
-            datptr->stat.n_op_attivi_sim += n_attivi_s;
-            datptr->stat.n_pause_giorno += n_pause_g;
-            datptr->stat.n_pause_sim += n_pause_s;
+            datptr->stat.n_op_attivi_giorno += n_attivi;
+            datptr->stat.n_op_attivi_sim += n_attivi;
+            datptr->stat.n_pause_giorno += n_pause;
+            datptr->stat.n_pause_sim += n_pause;
             release_sem(datptr->semid, 3);
 
             reserve_sem(datptr->semid, 1); //segnale gestito 
 
             sem_operation(sops, datptr->semid, 2, 0, 0, 1); //inizio nuova giornata
 
-            n_attivi_g = 0;
-            n_pause_g = 0;
+            n_attivi = 0;
+            n_pause = 0;
 
             flag_handler = 0;
 

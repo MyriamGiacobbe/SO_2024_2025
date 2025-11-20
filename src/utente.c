@@ -9,6 +9,8 @@
 
 #define N_REQUESTS 3
 
+int n_utenti_serv = 0, t_attesa = 0;
+
 Data* datptr;
 struct sembuf sops;
 int flag_handler = 0;
@@ -52,13 +54,10 @@ void startDay(int qid, int semid) {
     double p_serv = (double)rand() / RAND_MAX;
     
     if(p_serv < P_SERV_MIN || p_serv > P_SERV_MAX) {
-        printf("[utente %d] Non vado alle poste\n", getpid());
         return;
     }
 
     block_signal();
-
-    printf("[utente %d] Inizio l'ennesima giornata\n", getpid());
 
     struct message_t msg_snd_to_erog, msg_rcv_from_erog;
 
@@ -110,8 +109,6 @@ void startDay(int qid, int semid) {
 
             block_signal();
 
-            printf("[utente %d] ticket erogato\n", getpid());
-
             clock_t start, end;
             double attesa;
 
@@ -141,7 +138,10 @@ void startDay(int qid, int semid) {
 
             release_sem(semid, num_serv);
 
-            printf("[utente %d] Mi hanno servito in %f secondi\n", getpid(), attesa);
+            reserve_sem(datptr->semid, 3);
+            datptr->stat.n_utenti_serviti[num_serv-1] += 1;
+            datptr->stat.t_attesa_utenti[num_serv-1] += attesa;
+            release_sem(datptr->semid, 3);
         }
     }
 
@@ -182,24 +182,15 @@ int main(int argc, char* argv[]) {
 
     reserve_sem(datptr->semid, 0);                      //fine inizializzazione processo
 
-    printf("[utente %d] Sono inizializzato\n", getpid());
-
     sem_operation(sops, datptr->semid, 2, 0, 0, 1);     //per iniziare giornata aspetta padre
 
     // decido se andare
     startDay(qid, semid);
 
     while(1){
-        printf("[utente %d] flag_handler = %d\n", getpid(), flag_handler);
         if(flag_handler) {
 
-            //reserve_sem(sem_stat, 0);
-            
-            //release_sem(sem_stat, 0);
-
             reserve_sem(datptr->semid, 1); //segnale gestito 
-
-            printf("[utente %d] Segnale gestito\n", getpid());
 
             sem_operation(sops, datptr->semid, 2, 0, 0, 1); //inizio nuova giornata
 
