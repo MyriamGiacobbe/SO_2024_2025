@@ -63,9 +63,9 @@ void startDay(int serv, int semid_seats, int qid) {
 
     printf("\n[DEBUG - OP %d] getval = %d, serv = %d\n", getpid(), semctl(semid_seats, serv-1, GETVAL), serv);
 
-    //if(flag_handler) return;
+    if(flag_handler) return;
     
-    if(reserve_sem(semid_seats, serv-1) == -2){
+    if(reserve_sem(semid_seats, serv-1) == -1){
         printf("\n[DEBUG - OP %d] Segnale fine giornata scattato\n", getpid());
         return;
     }
@@ -106,6 +106,8 @@ void startDay(int serv, int semid_seats, int qid) {
             printf("\n[DEBUG - OP %d] Vado in pausa\n", getpid());
             n_pause_g ++;
             n_pause_s ++;
+
+            release_sem(semid_seats, serv-1);
             break;
         }
     }
@@ -132,7 +134,7 @@ int main(int argc, char* argv[]) {
     struct sigaction sa;
     bzero(&sa, sizeof(sa));
     sa.sa_handler = endDay_handler;
-    //sa.sa_flags = 0;                                    //SystemCall interrotte
+    sa.sa_flags = 0;                                    //SystemCall interrotte
 
     sigemptyset(&new_mask);
     sigaddset(&new_mask, SIGUSR1);

@@ -38,7 +38,7 @@ int reserve_sem(int semid, int semnum) {
     struct sembuf sops = {semnum, -1, 0};
     if(semop(semid, &sops, 1) < 0) {
         if(errno == EINTR)
-            return -2;
+            return -1;
         ERROR
         exit(EXIT_FAILURE);
     }

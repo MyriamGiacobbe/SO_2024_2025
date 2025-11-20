@@ -8,8 +8,6 @@ BUILD_DIR = build
 SRC_DIR = src
 IPC_DIR = src/ipc
 
-VPATH = $(SRC_DIR) $(IPC_DIR)
-
 COMMON_OBJS =   $(IPC_DIR)/semaphores.c \
 				$(IPC_DIR)/message_queue.c \
 				$(IPC_DIR)/shared_memory.c 

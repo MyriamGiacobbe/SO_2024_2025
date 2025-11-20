@@ -32,6 +32,8 @@ void leggo_stat() {
 }
 
 void init_seats(int semid){
+    srand(time(NULL) + getpid());
+
     int count = NOF_WORKERS_SEATS;
     for(int i = 0; i < NUM_SERV; i++){
         double random = (double)rand() / RAND_MAX;
@@ -80,7 +82,6 @@ void create_process(char* file_name) {
 }
 
 int main() {
-    srand(time(NULL) + getpid());
 
     setbuf(stdout, NULL);
 
