@@ -91,11 +91,6 @@ void startDay(int qid, int semid) {
             if(receive_msg(qid, &msg_rcv_from_erog, getpid()) == -1)
                 break;
 
-            long nanosec_per_min = N_NANO_SECS * atol(msg_rcv_from_erog.msg);
-            struct timespec t_hour;
-            t_hour.tv_sec = nanosec_per_min / 1000000000;
-            t_hour.tv_nsec = 0;
-
             clock_t start, end;
             double attesa;
 
