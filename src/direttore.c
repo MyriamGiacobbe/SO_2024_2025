@@ -31,8 +31,6 @@ void leggo_stat() {
 }
 
 void init_seats(int semid){
-    //printf("[DEBUG - DIRETTORE] Sportelli rinizializzati\n");
-    
     srand(time(NULL));
     
     int count = NOF_WORKERS_SEATS;
@@ -58,6 +56,7 @@ void init_seats(int semid){
 void create_process(char* file_name) {
     char file_path[128];
     snprintf(file_path, 128, "../bin/%s", file_name);
+    
     pid_t pid = fork();
     if(pid == -1) {
         perror("fork");
