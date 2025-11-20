@@ -12,7 +12,8 @@
 
 int numPause = NOF_PAUSE;
 
-int n_attivi_g = 0, n_attivi_s = 0, n_pause_g = 0, n_pause_s = 0, flag_handler = 0;
+int n_attivi_g = 0, n_attivi_s = 0, n_pause_g = 0, n_pause_s = 0;
+volatile sig_atomic_t flag_handler = 0;
 
 Data* datptr;
 struct sembuf sops;
@@ -40,6 +41,8 @@ void block_signal() {
         perror("segnale non bloccato.");
         exit(EXIT_FAILURE);
     }
+
+    printf("\n[DEBUG - OP %d] Segnale bloccato\n", getpid());
 }
 
 void unblock_signal() {
@@ -47,6 +50,8 @@ void unblock_signal() {
         perror("segnale non sbloccato in startDay.");
         exit(EXIT_FAILURE);
     }
+
+    printf("\n[DEBUG - OP %d] Segnale sbloccato\n", getpid());
 }
 
 int goPause(int semnum, int semid_seats) {
@@ -70,14 +75,13 @@ void startDay(int serv, int semid_seats, int qid) {
         return;
     }
 
+    block_signal();
+    
     printf("\n[DEBUG - OP %d] Segnale fine giornata NON scattato, flag_handler = %d\n", getpid(), flag_handler);
 
     n_attivi_g ++;
     n_attivi_s ++;
 
-    block_signal();
-
-    printf("\n[DEBUG - OP %d] Segnale bloccato\n", getpid());
 
     //struct message_t msg_snd, msg_rcv;
 
@@ -108,15 +112,16 @@ void startDay(int serv, int semid_seats, int qid) {
             n_pause_s ++;
 
             release_sem(semid_seats, serv-1);
-            break;
+
+            unblock_signal();
+            return;
         }
     }
 
-    release_sem(semid_seats, serv-1);
-
     unblock_signal();
 
-    printf("\n[DEBUG - OP %d] Segnale sbloccato\n", getpid());
+    release_sem(semid_seats, serv-1);
+
 }
 
 int main(int argc, char* argv[]) {

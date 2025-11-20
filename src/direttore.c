@@ -65,7 +65,11 @@ void create_process(char* file_name) {
     }
 
     if(pid == 0) {
-        setpgid(0, pgid);                   //per killarli tutti alla fine
+        if(setpgid(0, pgid) < 0) { //per killarli tutti alla fine
+            perror("setpgid");
+            exit(EXIT_FAILURE);
+        }
+
         if(strcmp(file_name, "operatore") == 0){
             char* args[] = {file_name, shmid_str, semid_str, NULL};
             execvp(file_path, args);
