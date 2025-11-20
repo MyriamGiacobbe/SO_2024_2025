@@ -76,18 +76,18 @@ void startDay(int serv, int semid_seats, int qid) {
     }
 
     block_signal();
-    
+
     printf("\n[DEBUG - OP %d] Segnale fine giornata NON scattato, flag_handler = %d\n", getpid(), flag_handler);
 
     n_attivi_g ++;
     n_attivi_s ++;
 
 
-    //struct message_t msg_snd, msg_rcv;
+    struct message_t msg_snd, msg_rcv;
 
     while(!check_signal() && !flag_handler){
-        usleep(100000);
-/*
+        //usleep(100000);
+
         if(receive_msg(qid, &msg_rcv, serv) == -1)
             break;
         printf("[op]: sto servendo utente\n");
@@ -105,7 +105,7 @@ void startDay(int serv, int semid_seats, int qid) {
         
         snprintf(msg_snd.msg, MSG_LENGTH, "FATTO");
         send_msg(qid, &msg_snd);
-*/
+
         if(goPause(serv-1, semid_seats)){
             printf("\n[DEBUG - OP %d] Vado in pausa\n", getpid());
             n_pause_g ++;

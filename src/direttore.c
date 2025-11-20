@@ -65,8 +65,9 @@ void create_process(char* file_name) {
     }
 
     if(pid == 0) {
+
         if(setpgid(0, pgid) < 0) { //per killarli tutti alla fine
-            perror("setpgid");
+            perror("setpgid padre");
             exit(EXIT_FAILURE);
         }
 
@@ -95,6 +96,9 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
+    if(setpgid(0, 0) == -1) {
+        perror("setpgid main");
+    }
     pgid = getpid();
 
     struct sigaction sa;
@@ -115,25 +119,25 @@ int main() {
     snprintf(shmid_str, 32, "%d", shmid);
     snprintf(semid_str, 32, "%d", semid_seats);
     
-    init_sem(shared_data->semid, 0, NOF_WORKERS);       //Barriera iniziale
-    init_sem(shared_data->semid, 1, NOF_WORKERS);       //Barriera fine giornata
+    init_sem(shared_data->semid, 0, TOTAL_CHILD);       //Barriera iniziale
+    init_sem(shared_data->semid, 1, WORKERS_USERS);       //Barriera fine giornata
     init_sem(shared_data->semid, 2, 1);                 //Semaforo start giornata (rosso/verde)
     init_sem(shared_data->semid, 3, 1);                 //MUTEX per le statistiche
 
     init_seats(semid_seats);
     
-    /* 2.1 Creazione utenti 
+    /* 2.1 Creazione utenti*/
     for(int i = 0; i < NOF_USERS; i++) {
         create_process("utente");
     }
-    */
+
     /*2.2 Creazione operatori*/
     for(int i = 0; i < NOF_WORKERS; i++)
         create_process("operatore");
 
-    /*2.2 Creazione erogatore_ticket
+    /*2.2 Creazione erogatore_ticket*/
     create_process("erogatore");
-    */
+    
     printf("\n[DEBUG - DIR] Processi creati\n");
 
     sem_operation(sops, shared_data->semid, 0, 0, 0, 1); //waitforzero -> aspetta che tutti i processi siano pronti
