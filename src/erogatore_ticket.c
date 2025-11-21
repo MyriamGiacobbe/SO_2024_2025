@@ -36,10 +36,10 @@ int eroga_ticket(int num_serv) {
 int main(int argc, char* argv[]) {
 
     struct message_t msg_rcv;
-
-    int qid = create_queue(KEY_MSG);
-
+    
     datptr = (Data*)attach_shm(atoi(argv[1]));
+    
+    int qid = datptr->qid;
     
     struct sigaction sa;
     bzero(&sa, sizeof(sa));
@@ -76,8 +76,10 @@ int main(int argc, char* argv[]) {
             msg_snd.type_msg = msg_rcv.pid;
             msg_snd.pid = getpid();
 
+            int serv = atoi(msg_rcv.msg);
+
             int time;
-            if ((time = eroga_ticket(atoi(msg_rcv.msg))) == -1) {
+            if ((time = eroga_ticket(serv)) == -1) {
                 fprintf(stderr, "eroga_ticket failed\n");
                 exit(EXIT_FAILURE);
             }

@@ -13,11 +13,18 @@ int n_utenti_serv = 0, t_attesa = 0;
 
 Data* datptr;
 struct sembuf sops;
-int flag_handler = 0;
+int flag_endDay = 0, flag_endSim = 0;
 sigset_t new_mask, old_mask;
 
-void endDay_handler(int signum){
-    flag_handler = 1;
+void signal_handler(int signum){
+    switch(signum) {
+        case SIGUSR1:
+            flag_endDay = 1;
+            break;
+        case SIGTERM:
+            flag_endSim = 1;
+            break;
+    }
 }
 
 int check_signal(){
@@ -93,7 +100,7 @@ void startDay(int qid, int semid) {
     nanosleep(&t_hour, NULL);
 
     // controllo esistenza servizio
-    for(int i = 0; i < n_requests && !check_signal() && !flag_handler; i++) {
+    for(int i = 0; i < n_requests && !check_signal() && !flag_endDay; i++) {
         int num_serv = list_serv[i];
         if(datptr->serv_erog[num_serv-1] > 0) {
             msg_snd_to_erog.type_msg = NUM_SERV+1;
@@ -104,15 +111,29 @@ void startDay(int qid, int semid) {
             
             unblock_signal();
 
-            if(receive_msg(qid, &msg_rcv_from_erog, getpid()) == -1)
+            if(receive_msg(qid, &msg_rcv_from_erog, getpid()) == -1) {
+
+                reserve_sem(datptr->semid, 3);
+                datptr->stat.n_serv_non_erog[num_serv-1] += 1;
+                release_sem(datptr->semid, 3);
+
                 break;
+            }
 
             block_signal();
+
+            int time = atoi(msg_rcv_from_erog.msg);
 
             clock_t start, end;
             double attesa;
 
             start = clock();
+
+            reserve_sem(datptr->semid, 3);
+            datptr->stat.t_erog_serv[num_serv-1] += time;
+            datptr->stat.n_serv_erog[num_serv-1] += 1;
+            datptr->utenti_in_attesa++;
+            release_sem(datptr->semid, 3);
 
             unblock_signal();
 
@@ -124,7 +145,7 @@ void startDay(int qid, int semid) {
             msg_snd_to_op.type_msg = num_serv;
             msg_snd_to_op.pid = getpid();
             
-            snprintf(msg_snd_to_op.msg, MSG_LENGTH, "%s", msg_rcv_from_erog.msg);
+            snprintf(msg_snd_to_op.msg, MSG_LENGTH, "%d", time);
             send_msg(qid, &msg_snd_to_op);
 
             if (receive_msg(qid, &msg_rcv_from_op, getpid()) == -1)
@@ -139,6 +160,7 @@ void startDay(int qid, int semid) {
             release_sem(semid, num_serv);
 
             reserve_sem(datptr->semid, 3);
+            datptr->utenti_in_attesa--;
             datptr->stat.n_utenti_serviti[num_serv-1] += 1;
             datptr->stat.t_attesa_utenti[num_serv-1] += attesa;
             release_sem(datptr->semid, 3);
@@ -157,8 +179,6 @@ int main(int argc, char* argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    int qid = create_queue(KEY_MSG);
-
     int sem_size = NUM_SERV+1;
 
     int semid = create_sem(key, sem_size);
@@ -167,16 +187,20 @@ int main(int argc, char* argv[]) {
         init_sem(semid, i, 1);
 
     datptr = (Data*)attach_shm(atoi(argv[1]));
+
+    int qid = datptr->qid;
     
     struct sigaction sa;
     bzero(&sa, sizeof(sa));
-    sa.sa_handler = endDay_handler;
+    sa.sa_handler = signal_handler;
     sa.sa_flags = 0;
     
     sigemptyset(&new_mask);
     sigaddset(&new_mask, SIGUSR1);
+    sigaddset(&new_mask, SIGTERM);
     
     sigaction(SIGUSR1, &sa, NULL);
+    sigaction(SIGTERM, &sa, NULL);
     
     srand(time(NULL) + getpid());
 
@@ -187,14 +211,14 @@ int main(int argc, char* argv[]) {
     // decido se andare
     startDay(qid, semid);
 
-    while(1){
-        if(flag_handler) {
+    while(!flag_endSim){
+        if(flag_endDay) {
 
             reserve_sem(datptr->semid, 1); //segnale gestito 
 
             sem_operation(sops, datptr->semid, 2, 0, 0, 1); //inizio nuova giornata
 
-            flag_handler = 0;
+            flag_endDay = 0;
             
             startDay(qid, semid);
 
@@ -203,7 +227,8 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    //delete_queue(qid);
+    reserve_sem(datptr->semid, 1);
+
     detach_shm(datptr);
 
     return 0;

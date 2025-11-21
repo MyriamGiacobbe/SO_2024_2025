@@ -13,14 +13,21 @@
 int numPause = NOF_PAUSE;
 
 int n_attivi = 0, n_pause = 0;
-volatile sig_atomic_t flag_handler = 0;
+int flag_endDay = 0, flag_endSim = 0;
 
 Data* datptr;
 struct sembuf sops;
 sigset_t new_mask, old_mask; 
 
-void endDay_handler(int signum){
-    flag_handler = 1;
+void signal_handler(int signum){
+    switch(signum) {
+        case SIGUSR1:
+            flag_endDay = 1;
+            break;
+        case SIGTERM:
+            flag_endSim = 1;
+            break;
+    }
 }
 
 int check_signal(){
@@ -60,18 +67,32 @@ int goPause(int semnum, int semid_seats) {
 
 void startDay(int serv, int semid_seats, int qid) {
 
-    if(flag_handler) return;
+    if(flag_endDay) return;
     
     if(reserve_sem(semid_seats, serv-1) == -1)
         return;
 
     block_signal();
 
+    reserve_sem(datptr->semid, 3);
+    int flag_sportello = 0;
+
+    for(int i = 0; i < NOF_WORKERS_SEATS && !flag_sportello; i++) {
+        for(int j = 0; j < NUM_SERV; j++) {
+            if(datptr->operatore_sportello[i][j] == 1) {
+                flag_sportello = 1;
+                datptr->stat.operatore_sportello_giorno[i] += 1;
+                break;
+            }
+        }
+    }
+    release_sem(datptr->semid, 3);
+
     n_attivi ++;
 
     struct message_t msg_snd, msg_rcv;
 
-    while(!check_signal() && !flag_handler){
+    while(!check_signal() && !flag_endDay){
 
         unblock_signal();
 
@@ -108,25 +129,33 @@ void startDay(int serv, int semid_seats, int qid) {
 
 }
 
+void scrivo_stat() {
+    datptr->stat.n_op_attivi_giorno += n_attivi;
+    datptr->stat.n_op_attivi_sim += n_attivi;
+    datptr->stat.n_pause_sim += n_pause;
+}
+
 int main(int argc, char* argv[]) {
     setbuf(stdout, NULL);
-
-    int qid = create_queue(KEY_MSG);
 
     srand(time(NULL) + getpid());
     int serv = rand() % NUM_SERV + 1;
 
     datptr = (Data*)attach_shm(atoi(argv[1]));
 
+    int qid = datptr->qid;
+
     struct sigaction sa;
     bzero(&sa, sizeof(sa));
-    sa.sa_handler = endDay_handler;
+    sa.sa_handler = signal_handler;
     sa.sa_flags = 0;                                    //SystemCall interrotte
 
     sigemptyset(&new_mask);
     sigaddset(&new_mask, SIGUSR1);
+    sigaddset(&new_mask, SIGTERM);
     
     sigaction(SIGUSR1, &sa, NULL);
+    sigaction(SIGTERM, &sa, NULL);
 
     reserve_sem(datptr->semid, 0);                      //fine inizializzazione processo
 
@@ -134,13 +163,11 @@ int main(int argc, char* argv[]) {
     
     startDay(serv, atoi(argv[2]), qid);
 
-    while(1){
-        if(flag_handler) {
+    while(!flag_endSim){
+        if(flag_endDay) {
+
             reserve_sem(datptr->semid, 3);
-            datptr->stat.n_op_attivi_giorno += n_attivi;
-            datptr->stat.n_op_attivi_sim += n_attivi;
-            datptr->stat.n_pause_giorno += n_pause;
-            datptr->stat.n_pause_sim += n_pause;
+            scrivo_stat();
             release_sem(datptr->semid, 3);
 
             reserve_sem(datptr->semid, 1); //segnale gestito 
@@ -150,13 +177,22 @@ int main(int argc, char* argv[]) {
             n_attivi = 0;
             n_pause = 0;
 
-            flag_handler = 0;
+            flag_endDay = 0;
 
             startDay(serv, atoi(argv[2]), qid);
         } else {
             pause();
         }
     }
+
+    //scrivo_stat();
+    reserve_sem(datptr->semid, 3);
+    datptr->stat.n_op_attivi_giorno += n_attivi;
+    datptr->stat.n_op_attivi_sim += n_attivi;
+    datptr->stat.n_pause_sim += n_pause;
+    release_sem(datptr->semid, 3);
+
+    reserve_sem(datptr->semid, 1);
 
     detach_shm(datptr);
 

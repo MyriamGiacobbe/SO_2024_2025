@@ -26,6 +26,8 @@ struct sembuf sops;
 char semid_str[32];
 char shmid_str[32];
 
+int sportelli_esistenti = 0;
+
 void leggo_stat() {
     printf("Operatori attivi durante il giorno: %d\n", shared_data->stat.n_op_attivi_giorno);
 
@@ -33,15 +35,74 @@ void leggo_stat() {
 
     printf("Operatori attivi durante la simulazione: %d\n", shared_data->stat.n_op_attivi_sim);
 
-    printf("Pause effettuate durante il giorno: %f\n", (double)shared_data->stat.n_pause_giorno/NOF_WORKERS);
-
-    shared_data->stat.n_pause_giorno = 0;
+    printf("Numero di pause in media effettuate durante il giorno: %.2f\n", (double)shared_data->stat.n_pause_sim/count);
 
     printf("Pause effettuate durante la simulazione: %d\n\n", shared_data->stat.n_pause_sim);
+
+    printf("Numero di utenti serviti durante la simulazione:\n");
+    for(int i = 0; i < NUM_SERV; i++)
+        printf("servizio %d: %d\n", i+1, shared_data->stat.n_utenti_serviti[i]);
+
+    printf("\nNumero di utenti serviti in medio al giorno:\n");
+    for(int i = 0; i < NUM_SERV; i++)
+        printf("servizio %d: %.2f\n", i+1, (double)shared_data->stat.n_utenti_serviti[i]/count);
+
+    printf("\nTempo medio di attesa di utenti durante simulazione:\n");
+    for(int i = 0; i < NUM_SERV; i++)
+        printf("servizio %d: %f secondi\n", i+1, (double)shared_data->stat.t_attesa_utenti[i]/SIM_DURATION);
+
+    printf("\nTempo medio di attesa di utenti al giorno:\n");
+    for(int i = 0; i < NUM_SERV; i++)
+        printf("servizio %d: %f secondi\n", i+1, (double)shared_data->stat.t_attesa_utenti[i]/count);
+
+    printf("\nNumero di servizi erogati durante la simulazione:\n");
+    for(int i = 0; i < NUM_SERV; i++)
+        printf("servizio %d: %d\n", i+1, shared_data->stat.n_serv_erog[i]);
+
+    printf("\nNumero di servizi NON erogati durante la simulazione:\n");
+    for(int i = 0; i < NUM_SERV; i++)
+        printf("servizio %d: %d\n", i+1, shared_data->stat.n_serv_non_erog[i]);
+
+    printf("\nNumero di servizi erogati in media al giorno:\n");
+    for(int i = 0; i < NUM_SERV; i++)
+        printf("servizio %d: %.2f\n", i+1, (double)shared_data->stat.n_serv_erog[i]/count);
+
+    printf("\nNumero di servizi NON erogati in media al giorno:\n");
+    for(int i = 0; i < NUM_SERV; i++)
+        printf("servizio %d: %.2f\n", i+1, (double)shared_data->stat.n_serv_non_erog[i]/count);
+
+    double tempo_medio[NUM_SERV];
+    for(int i = 0; i < NUM_SERV; i++) {
+        if(shared_data->stat.t_erog_serv[i] == 0 || shared_data->stat.n_serv_erog[i] == 0)
+            tempo_medio[i] = 0;
+        else
+            tempo_medio[i] += (double)shared_data->stat.t_erog_serv[i]/shared_data->stat.n_serv_erog[i];
+    }
+
+    printf("\nTempo medio di erogazione servizi nella simulazione:\n");
+    for(int i = 0; i < NUM_SERV; i++) {
+        if(tempo_medio[i] <= 0)
+            printf("servizio %d: %d minuti\n", i+1, 0);
+        else
+            printf("servizio %d: %.1f minuti\n", i+1, tempo_medio[i]/count);
+    }
+
+    printf("\nTempo medio di erogazione servizi al giorno:\n");
+    for(int i = 0; i < NUM_SERV; i++)
+        printf("servizio %d: %.1f minuti\n", i+1, tempo_medio[i]);
+
+    printf("\nRaporto tra operatori disponibili e sportelli esistenti per ogni sportello per ogni giorno:\n");
+    for(int i = 0; i < NOF_WORKERS_SEATS; i++) {
+        printf("operatori / sportello %d: %.2f\n", i+1, (double)shared_data->stat.operatore_sportello_giorno[i]/sportelli_esistenti);
+        shared_data->stat.operatore_sportello_giorno[i] = 0;
+    }
+    
 }
 
 void init_seats(int semid){
     srand(time(NULL) + getpid());
+
+    int num_sportello = 0;
 
     int count = NOF_WORKERS_SEATS;
     for(int i = 0; i < NUM_SERV; i++){
@@ -54,11 +115,19 @@ void init_seats(int semid){
             shared_data->serv_erog[i] = r;
 
             count -= r;
+
+            shared_data->operatore_sportello[num_sportello][i] = 1;
+            num_sportello++;
+
+            sportelli_esistenti++;
         }
         else{
             init_sem(semid, i, 0);
 
             shared_data->serv_erog[i] = 0;
+
+            shared_data->operatore_sportello[num_sportello][i] = 0;
+            num_sportello++;
         }
     }
 }
@@ -114,6 +183,7 @@ int main() {
     bzero(&sa, sizeof(sa));
     sa.sa_handler = SIG_IGN;
     sigaction(SIGUSR1, &sa, NULL);
+    sigaction(SIGTERM, &sa, NULL);
     
     int semid_seats = create_sem(key, NUM_SERV);
 
@@ -121,14 +191,15 @@ int main() {
     int shmid = create_shm(IPC_PRIVATE, sizeof(Data));
     shared_data = (Data*)attach_shm(shmid);
 
+    shared_data->utenti_in_attesa = 0;
     shared_data->stat = (Statistiche){0};
     
     shared_data->semid = create_sem(IPC_PRIVATE, 4); //4 semafori: 0=Init, 1=DayEnd, 2=DayStart, 3=StatMutex
+
+    shared_data->qid = create_queue(KEY_MSG);
     
     snprintf(shmid_str, 32, "%d", shmid);
     snprintf(semid_str, 32, "%d", semid_seats);
-
-    printf("\n[DEBUG - DIR] TOTAL_CHILD = %d, WORKERS_USERS = %d\n", TOTAL_CHILD, WORKERS_USERS);
     
     init_sem(shared_data->semid, 0, TOTAL_CHILD);       //Barriera iniziale
     init_sem(shared_data->semid, 1, WORKERS_USERS);     //Barriera fine giornata
@@ -148,12 +219,8 @@ int main() {
 
     /*2.2 Creazione erogatore_ticket*/
     create_process("erogatore");
-    
-    printf("\n[DEBUG - DIR] Processi creati\n");
 
     sem_operation(sops, shared_data->semid, 0, 0, 0, 1); //waitforzero -> aspetta che tutti i processi siano pronti
-
-    printf("\n[DEBUG - DIR] Processi inizializzati\n");
     
     long nanosec_per_day = (long)N_NANO_SECS * 10 * 60;
     struct timespec t_day;
@@ -162,21 +229,23 @@ int main() {
     
     reserve_sem(shared_data->semid, 2);  //tutti iniziano giornata
 
-    printf("\n[DEBUG - DIR] Avvio prima giornata\n");
+    int flag_explode = 0;
 
-    while(count <= SIM_DURATION){
+    while(count < SIM_DURATION){
         nanosleep(&t_day, NULL);
 
         release_sem(shared_data->semid, 2);  //ripristinare flag di inizio giornata
 
+        #ifdef EXPLODE
+        if(shared_data->utenti_in_attesa > EXPLODE_THRESHOLD) {
+            flag_explode = 1;
+            break;
+        }
+        #endif
+
         kill(-pgid, SIGUSR1);
 
-        printf("\n[DEBUG - DIR] Inviato segnale di fine giornata\n");
-
         sem_operation(sops, shared_data->semid, 1, 0, 0, 1); //tutti finiscono giornata
-
-        printf("\n[DEBUG - DIR] Fine giornata %d\n", count);
-
 
         init_seats(semid_seats);
 
@@ -193,6 +262,16 @@ int main() {
 
     kill(-pgid, SIGTERM);
 
+    sem_operation(sops, shared_data->semid, 1, 0, 0, 1);
+
+    leggo_stat();
+
+    if(flag_explode)
+        printf("Motivo: EXPLODE_THRESHOLD superata\n");
+    else
+        printf("Motivo: TIMEOUT raggiunto\n");
+
+    delete_queue(shared_data->qid);
     delete_sem(shared_data->semid);
     delete_sem(semid_seats);
     detach_shm(shared_data);

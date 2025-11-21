@@ -26,12 +26,15 @@ typedef struct {
     int n_op_attivi_sim;
     int n_pause_giorno;
     int n_pause_sim;
-    double operatore_sportello_giorno;
+    int operatore_sportello_giorno[NOF_WORKERS_SEATS];    
 } Statistiche;
 
 typedef struct {
     int semid;
+    int qid;
     int serv_erog[NUM_SERV];
+    int operatore_sportello[NOF_WORKERS_SEATS][NUM_SERV];
+    int utenti_in_attesa;
 	Statistiche stat;
 } Data;
 
