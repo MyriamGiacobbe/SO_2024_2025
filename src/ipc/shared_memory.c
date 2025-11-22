@@ -2,7 +2,7 @@
 
 
 int create_shm(key_t k, size_t size) {
-    int shmid = shmget(k, size, 0600);
+    int shmid = shmget(k, size, IPC_CREAT | 0600);
     if(shmid == -1) {
         ERROR
         exit(EXIT_FAILURE);

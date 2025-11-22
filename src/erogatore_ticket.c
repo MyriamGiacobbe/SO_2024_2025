@@ -103,9 +103,13 @@ int main(int argc, char* argv[]) {
 
             send_msg(qid, &msg_snd);
 
+            detach_shm(datptr);
+
             exit(EXIT_SUCCESS);
         }
     }
+
+    detach_shm(datptr);
 
     return 0;
 }

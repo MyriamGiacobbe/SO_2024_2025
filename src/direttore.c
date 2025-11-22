@@ -174,15 +174,19 @@ void create_process(char* file_name) {
     }
 }
 
-int main() {
-
-    setbuf(stdout, NULL);
-
+key_t generate_new_key(char c) {
     key_t key;
-    if((key = ftok(".", 'D')) == -1) {
+    if((key = ftok(".", c)) == -1) {
         perror("ftok");
         exit(EXIT_FAILURE);
     }
+
+    return key;
+}
+
+int main() {
+
+    setbuf(stdout, NULL);
 
     if(setpgid(0, 0) == -1) {
         perror("setpgid main");
@@ -195,14 +199,14 @@ int main() {
     sigaction(SIGUSR1, &sa, NULL);
     sigaction(SIGTERM, &sa, NULL);
     
-    int semid_seats_op = create_sem(key, NUM_SERV);
+    int semid_seats_op = create_sem(generate_new_key('D'), NUM_SERV);
     int semid_seats_ut = create_sem(IPC_PRIVATE, NUM_SERV);
 
     for(int i = 0; i < NUM_SERV; i++)
         init_sem(semid_seats_ut, i, 1);
 
     //1. Inizializzazione risorse
-    int shmid = create_shm(IPC_PRIVATE, sizeof(Data));
+    int shmid = create_shm(generate_new_key('I'), sizeof(Data));
     shared_data = (Data*)attach_shm(shmid);
 
     shared_data->utenti_in_attesa = 0;
