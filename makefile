@@ -1,6 +1,6 @@
 CC = gcc
 
-DEF ?= EXPLODE  #di default fa partire l'Explode, se voglio altro: make DEF=TIMEOUT
+DEF ?= TIMEOUT  #di default fa partire l'Explode, se voglio altro: make DEF=TIMEOUT
 CFLAGS = -D$(DEF) -Wall -g -I src
 
 BIN_DIR = bin
@@ -8,21 +8,32 @@ BUILD_DIR = build
 SRC_DIR = src
 IPC_DIR = src/ipc
 
-COMMON_OBJS =   $(IPC_DIR)/semaphores.c \
-				$(IPC_DIR)/message_queue.c \
-				$(IPC_DIR)/shared_memory.c 
+COMMON_OBJS =   $(BUILD_DIR)/semaphores.o\
+				$(BUILD_DIR)/message_queue.o \
+				$(BUILD_DIR)/shared_memory.o 
 
 TARGETS =	$(BIN_DIR)/direttore \
 			$(BIN_DIR)/operatore \
 			$(BIN_DIR)/utente \
 			$(BIN_DIR)/erogatore
 
-.PHONY: all clean run
+.PHONY: all clean run explode timeout dirs
+
+explode: clean
+	$(MAKE) all DEF=EXPLODE
+
+timeout: clean
+	$(MAKE) all DEF=TIMEOUT
+
+all: dirs $(TARGETS)
 
 run: all
 	cd $(BIN_DIR) && ./direttore
 
-all: $(BIN_DIR) $(TARGETS)
+dirs:
+	@mkdir -p $(BIN_DIR)
+	@mkdir -p $(BUILD_DIR)
+
 
 # Qui è come creare gli eseguibili dai .o
 $(BIN_DIR)/direttore: $(BUILD_DIR)/direttore.o $(COMMON_OBJS)
@@ -41,7 +52,9 @@ $(BIN_DIR)/erogatore: $(BUILD_DIR)/erogatore_ticket.o $(COMMON_OBJS)
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c 
 		$(CC) $(CFLAGS) -c $< -o $@
 
+$(BUILD_DIR)/%.o: $(IPC_DIR)/%.c 
+		$(CC) $(CFLAGS) -c $< -o $@
+
 clean: 
-	rm -f $(TARGETS) $(BIN_DIR)/*.o
-	rm -f $(BUILD_DIR)/*.o
-	ipcrm -a
+	rm -f $(TARGETS) $(BUILD_DIR)/*.o
+	-ipcrm -a
