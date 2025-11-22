@@ -76,14 +76,13 @@ void startDay(int serv, int semid_seats, int qid) {
 
     reserve_sem(datptr->semid, 3);
     int flag_sportello = 0;
-
-    for(int i = 0; i < NOF_WORKERS_SEATS && !flag_sportello; i++) {
-        for(int j = 0; j < NUM_SERV; j++) {
-            if(datptr->operatore_sportello[i][j] == 1) {
-                flag_sportello = 1;
-                datptr->stat.operatore_sportello_giorno[i] += 1;
-                break;
-            }
+    int n_sportello = 0;
+    for(; n_sportello < NOF_WORKERS_SEATS && !flag_sportello; n_sportello++) {
+        if(datptr->operatore_sportello[n_sportello][serv-1] == 1) {
+            flag_sportello = 1;
+            datptr->operatore_sportello[n_sportello][serv-1] = 0;
+            
+            datptr->stat.operatore_sportello_giorno[n_sportello] += 1;
         }
     }
     release_sem(datptr->semid, 3);
@@ -115,6 +114,10 @@ void startDay(int serv, int semid_seats, int qid) {
 
         if(goPause(serv-1, semid_seats)){
             n_pause++;
+
+            reserve_sem(datptr->semid, 3);
+            datptr->operatore_sportello[n_sportello][serv-1] = 1;
+            release_sem(datptr->semid, 3);
 
             release_sem(semid_seats, serv-1);
 
@@ -170,7 +173,7 @@ int main(int argc, char* argv[]) {
             scrivo_stat();
             release_sem(datptr->semid, 3);
 
-            reserve_sem(datptr->semid, 1); //segnale gestito 
+            reserve_sem(datptr->semid, 1); //segnale gestito
 
             sem_operation(sops, datptr->semid, 2, 0, 0, 1); //inizio nuova giornata
 
@@ -185,11 +188,8 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    //scrivo_stat();
     reserve_sem(datptr->semid, 3);
-    datptr->stat.n_op_attivi_giorno += n_attivi;
-    datptr->stat.n_op_attivi_sim += n_attivi;
-    datptr->stat.n_pause_sim += n_pause;
+    scrivo_stat();
     release_sem(datptr->semid, 3);
 
     reserve_sem(datptr->semid, 1);

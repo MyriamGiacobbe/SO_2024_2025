@@ -18,7 +18,7 @@
 #define TOTAL_CHILD NOF_WORKERS + NOF_USERS + 1
 #define WORKERS_USERS NOF_WORKERS + NOF_USERS
 
-int count = 1;
+int giorni_sim = 1;
 
 pid_t pgid;
 Data* shared_data;
@@ -35,7 +35,7 @@ void leggo_stat() {
 
     printf("Operatori attivi durante la simulazione: %d\n", shared_data->stat.n_op_attivi_sim);
 
-    printf("Numero di pause in media effettuate durante il giorno: %.2f\n", (double)shared_data->stat.n_pause_sim/count);
+    printf("Numero di pause in media effettuate durante il giorno: %.2f\n", (double)shared_data->stat.n_pause_sim/giorni_sim);
 
     printf("Pause effettuate durante la simulazione: %d\n\n", shared_data->stat.n_pause_sim);
 
@@ -45,7 +45,7 @@ void leggo_stat() {
 
     printf("\nNumero di utenti serviti in medio al giorno:\n");
     for(int i = 0; i < NUM_SERV; i++)
-        printf("servizio %d: %.2f\n", i+1, (double)shared_data->stat.n_utenti_serviti[i]/count);
+        printf("servizio %d: %.2f\n", i+1, (double)shared_data->stat.n_utenti_serviti[i]/giorni_sim);
 
     printf("\nTempo medio di attesa di utenti durante simulazione:\n");
     for(int i = 0; i < NUM_SERV; i++)
@@ -53,7 +53,7 @@ void leggo_stat() {
 
     printf("\nTempo medio di attesa di utenti al giorno:\n");
     for(int i = 0; i < NUM_SERV; i++)
-        printf("servizio %d: %f secondi\n", i+1, (double)shared_data->stat.t_attesa_utenti[i]/count);
+        printf("servizio %d: %f secondi\n", i+1, (double)shared_data->stat.t_attesa_utenti[i]/giorni_sim);
 
     printf("\nNumero di servizi erogati durante la simulazione:\n");
     for(int i = 0; i < NUM_SERV; i++)
@@ -65,11 +65,11 @@ void leggo_stat() {
 
     printf("\nNumero di servizi erogati in media al giorno:\n");
     for(int i = 0; i < NUM_SERV; i++)
-        printf("servizio %d: %.2f\n", i+1, (double)shared_data->stat.n_serv_erog[i]/count);
+        printf("servizio %d: %.2f\n", i+1, (double)shared_data->stat.n_serv_erog[i]/giorni_sim);
 
     printf("\nNumero di servizi NON erogati in media al giorno:\n");
     for(int i = 0; i < NUM_SERV; i++)
-        printf("servizio %d: %.2f\n", i+1, (double)shared_data->stat.n_serv_non_erog[i]/count);
+        printf("servizio %d: %.2f\n", i+1, (double)shared_data->stat.n_serv_non_erog[i]/giorni_sim);
 
     double tempo_medio[NUM_SERV];
     for(int i = 0; i < NUM_SERV; i++) {
@@ -84,7 +84,7 @@ void leggo_stat() {
         if(tempo_medio[i] <= 0)
             printf("servizio %d: %d minuti\n", i+1, 0);
         else
-            printf("servizio %d: %.1f minuti\n", i+1, tempo_medio[i]/count);
+            printf("servizio %d: %.1f minuti\n", i+1, tempo_medio[i]/giorni_sim);
     }
 
     printf("\nTempo medio di erogazione servizi al giorno:\n");
@@ -116,10 +116,11 @@ void init_seats(int semid){
 
             count -= r;
 
-            shared_data->operatore_sportello[num_sportello][i] = 1;
-            num_sportello++;
-
-            sportelli_esistenti++;
+            while(num_sportello < r) {
+                shared_data->operatore_sportello[num_sportello][i] = 1;
+                num_sportello++;
+                sportelli_esistenti++;
+            }
         }
         else{
             init_sem(semid, i, 0);
@@ -231,7 +232,7 @@ int main() {
 
     int flag_explode = 0;
 
-    while(count < SIM_DURATION){
+    while(giorni_sim < SIM_DURATION){
         nanosleep(&t_day, NULL);
 
         release_sem(shared_data->semid, 2);  //ripristinare flag di inizio giornata
@@ -257,7 +258,7 @@ int main() {
 
         reserve_sem(shared_data->semid, 2);
 
-        count++;
+        giorni_sim++;
     }
 
     kill(-pgid, SIGTERM);
