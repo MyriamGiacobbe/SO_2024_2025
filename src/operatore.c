@@ -30,7 +30,7 @@ void signal_handler(int signum){
     }
 }
 
-int goPause(int semnum, int semid_seats) {
+int goPause() {
     double random = (double)rand() / RAND_MAX;
     
     if(numPause > 0 && random < 0.25){
@@ -84,7 +84,7 @@ void startDay(int serv, int semid_seats, int qid) {
         snprintf(msg_snd.msg, MSG_LENGTH, "FATTO");
         send_msg(qid, &msg_snd);
 
-        if(goPause(serv-1, semid_seats)){
+        if(goPause()){
             n_pause++;
 
             reserve_sem(datptr->semid, 3);

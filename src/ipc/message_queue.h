@@ -28,9 +28,37 @@ struct message_t{
     char msg[MSG_LENGTH];
 };
 
+/**
+*@brief Crea una coda di messaggi
+*
+*@param [in] k	Chiave associata alla coda di messaggi
+*@return restituisce l'ID della coda di messaggi
+*/
 int create_queue(key_t k);
+
+/**
+*@brief Permette di inviare un messaggio
+*
+*@param [in] qid	ID della coda di messaggi
+*@param [in] msg	Messaggio da inviare
+*/
 void send_msg(int qid, struct message_t *msg);
+
+/**
+*@brief Permette di ricevere un messaggio
+*
+*@param [in] qid	ID della coda di messaggi
+*@param [in] msg	Struttura del messaggio dove salvare le informazioni ricevute
+*@param [in] mtype	Tipo del messaggio
+*@return restituisce -1 in caso di EINTR, altrimenti 0
+*/
 int receive_msg(int qid, struct message_t *msg, long mtype);
+
+/**
+*@brief Permette di ricevere un messaggio
+*
+*@param [in] qid	ID della coda di messaggi
+*/
 void delete_queue(int qid);
 
 #endif
