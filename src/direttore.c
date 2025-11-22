@@ -23,7 +23,8 @@ int giorni_sim = 1;
 pid_t pgid;
 Data* shared_data;
 struct sembuf sops;
-char semid_str[32];
+char semid_op_str[32];
+char semid_ut_str[32];
 char shmid_str[32];
 
 int sportelli_esistenti = 0;
@@ -108,26 +109,19 @@ void init_seats(int semid){
     for(int i = 0; i < NUM_SERV; i++){
         double random = (double)rand() / RAND_MAX;
 
-        printf("[DIR] init_seats: count = %d\n", count);
-
         if(random > 0.25 && count > 0){
             int r = rand() % count + 1;
-            printf("[DIR] init_seats: r = %d\n", r);
             init_sem(semid, i, r);
 
             shared_data->serv_erog[i] = r;
 
             count -= r;
 
-            printf("[DIR] init_seats: count -= r => %d\n", count);
-
             for(int j = 0; num_sportello < NOF_WORKERS_SEATS && j < r; j++) {
                 shared_data->operatore_sportello[num_sportello][i] = 1;
                 num_sportello++;
                 sportelli_esistenti++;
             }
-
-            printf("[DIR] init_seats: num_sportello = %d\n", num_sportello);
         }
         else{
             init_sem(semid, i, 0);
@@ -158,11 +152,19 @@ void create_process(char* file_name) {
         }
 
         if(strcmp(file_name, "operatore") == 0){
-            char* args[] = {file_name, shmid_str, semid_str, NULL};
+            char* args[] = {file_name, shmid_str, semid_op_str, NULL};
             execvp(file_path, args);
             perror("execvp operatore");
             exit(EXIT_FAILURE);
         }
+
+        else if(strcmp(file_name, "utente") == 0){
+            char* args[] = {file_name, shmid_str, semid_ut_str, NULL};
+            execvp(file_path, args);
+            perror("execvp operatore");
+            exit(EXIT_FAILURE);
+        }
+
         else{
             char* args[] = {file_name, shmid_str, NULL};
             execvp(file_path, args);
@@ -193,7 +195,11 @@ int main() {
     sigaction(SIGUSR1, &sa, NULL);
     sigaction(SIGTERM, &sa, NULL);
     
-    int semid_seats = create_sem(key, NUM_SERV);
+    int semid_seats_op = create_sem(key, NUM_SERV);
+    int semid_seats_ut = create_sem(IPC_PRIVATE, NUM_SERV);
+
+    for(int i = 0; i < NUM_SERV; i++)
+        init_sem(semid_seats_ut, i, 1);
 
     //1. Inizializzazione risorse
     int shmid = create_shm(IPC_PRIVATE, sizeof(Data));
@@ -207,14 +213,15 @@ int main() {
     shared_data->qid = create_queue(KEY_MSG);
     
     snprintf(shmid_str, 32, "%d", shmid);
-    snprintf(semid_str, 32, "%d", semid_seats);
+    snprintf(semid_op_str, 32, "%d", semid_seats_op);
+    snprintf(semid_ut_str, 32, "%d", semid_seats_ut);
     
     init_sem(shared_data->semid, 0, TOTAL_CHILD);       //Barriera iniziale
     init_sem(shared_data->semid, 1, WORKERS_USERS);     //Barriera fine giornata
     init_sem(shared_data->semid, 2, 1);                 //Semaforo start giornata (rosso/verde)
     init_sem(shared_data->semid, 3, 1);                 //MUTEX per le statistiche
 
-    init_seats(semid_seats);
+    init_seats(semid_seats_op);
     
     /* 2.1 Creazione utenti*/
     for(int i = 0; i < NOF_USERS; i++) {
@@ -255,7 +262,7 @@ int main() {
 
         sem_operation(sops, shared_data->semid, 1, 0, 0, 1); //tutti finiscono giornata
 
-        init_seats(semid_seats);
+        init_seats(semid_seats_op);
 
         printf("\n");
         leggo_stat();
@@ -281,7 +288,8 @@ int main() {
 
     delete_queue(shared_data->qid);
     delete_sem(shared_data->semid);
-    delete_sem(semid_seats);
+    delete_sem(semid_seats_op);
+    delete_sem(semid_seats_ut);
     detach_shm(shared_data);
     remove_shm(shmid);
 

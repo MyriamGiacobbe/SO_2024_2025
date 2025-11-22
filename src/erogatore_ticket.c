@@ -17,6 +17,7 @@ void signal_handler(int signum) {
     switch(signum){
         case SIGCHLD:
            while(waitpid(-1, NULL, WNOHANG) > 0);
+           break;
         case SIGTERM:
             flag_endSim = 1;
             break;

@@ -56,6 +56,8 @@ void unblock_signal() {
 }
 
 void startDay(int qid, int semid) {
+
+    //printf("[UTENTE %d]\n", getpid());
     
     // scelta di andare
     double p_serv = (double)rand() / RAND_MAX;
@@ -137,7 +139,7 @@ void startDay(int qid, int semid) {
 
             unblock_signal();
 
-            if(reserve_sem(semid, num_serv) == -1)
+            if(reserve_sem(semid, num_serv-1) == -1)
                 return;
 
             struct message_t msg_snd_to_op, msg_rcv_from_op;
@@ -157,7 +159,7 @@ void startDay(int qid, int semid) {
 
             attesa = ((double)(end - start))/CLOCKS_PER_SEC;
 
-            release_sem(semid, num_serv);
+            release_sem(semid, num_serv-1);
 
             reserve_sem(datptr->semid, 3);
             datptr->utenti_in_attesa--;
@@ -171,21 +173,9 @@ void startDay(int qid, int semid) {
 }
 
 int main(int argc, char* argv[]) {
-    int num_giorni_passati = 0;
     setbuf(stdout, NULL);
 
-    int key;
-    if((key = ftok(".", 'U')) == -1) {
-        perror("ftok");
-        exit(EXIT_FAILURE);
-    }
-
-    int sem_size = NUM_SERV+1;
-
-    int semid = create_sem(key, sem_size);
-
-    for(int i = 0; i < sem_size; i++)
-        init_sem(semid, i, 1);
+    int semid = atoi(argv[2]);
 
     datptr = (Data*)attach_shm(atoi(argv[1]));
 
