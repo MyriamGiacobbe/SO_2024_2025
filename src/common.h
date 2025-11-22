@@ -36,6 +36,8 @@ typedef struct {
     int operatore_sportello[NOF_WORKERS_SEATS][NUM_SERV];
     int utenti_in_attesa;
 	Statistiche stat;
+    int flag_endDay;
+    int flag_endSim;
 } Data;
 
 
