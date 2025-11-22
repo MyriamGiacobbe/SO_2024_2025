@@ -139,6 +139,8 @@ void scrivo_stat() {
 }
 
 int main(int argc, char* argv[]) {
+    int num_giorni_passati = 0;
+
     setbuf(stdout, NULL);
 
     srand(time(NULL) + getpid());
@@ -168,6 +170,8 @@ int main(int argc, char* argv[]) {
 
     while(!flag_endSim){
         if(flag_endDay) {
+
+            printf("[OP] Passato giorno %d\n", ++num_giorni_passati);
 
             reserve_sem(datptr->semid, 3);
             scrivo_stat();

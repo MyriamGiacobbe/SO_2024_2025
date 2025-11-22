@@ -108,19 +108,26 @@ void init_seats(int semid){
     for(int i = 0; i < NUM_SERV; i++){
         double random = (double)rand() / RAND_MAX;
 
+        printf("[DIR] init_seats: count = %d\n", count);
+
         if(random > 0.25 && count > 0){
             int r = rand() % count + 1;
+            printf("[DIR] init_seats: r = %d\n", r);
             init_sem(semid, i, r);
 
             shared_data->serv_erog[i] = r;
 
             count -= r;
 
-            while(num_sportello < r) {
+            printf("[DIR] init_seats: count -= r => %d\n", count);
+
+            for(int j = 0; num_sportello < NOF_WORKERS_SEATS && j < r; j++) {
                 shared_data->operatore_sportello[num_sportello][i] = 1;
                 num_sportello++;
                 sportelli_esistenti++;
             }
+
+            printf("[DIR] init_seats: num_sportello = %d\n", num_sportello);
         }
         else{
             init_sem(semid, i, 0);
