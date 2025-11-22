@@ -11,9 +11,16 @@
 Data* datptr;
 struct sembuf sops;
 sigset_t new_mask, old_mask;
+int flag_endSim = 0;
 
 void reap_child_handler(int signum) {
-    while(waitpid(-1, NULL, WNOHANG) > 0);
+    switch(signum){
+        case SIGCHLD:
+           while(waitpid(-1, NULL, WNOHANG) > 0);
+        case SIGTERM:
+            flag_endSim = 1;
+            break;
+    }
 }
 
 int eroga_ticket(int num_serv) {
@@ -58,7 +65,8 @@ int main(int argc, char* argv[]) {
 
     sem_operation(sops, datptr->semid, 2, 0, 0, 1);     //per iniziare giornata aspetta padre
 
-    while(1) {
+
+    while(!flag_endSim) {
         if(receive_msg(qid, &msg_rcv, NUM_SERV+1) == -1){
             continue;
         }

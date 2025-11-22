@@ -38,7 +38,7 @@ int check_signal(){
         exit(EXIT_FAILURE);
     }
 
-    return sigismember(&pending_set, SIGUSR1);
+    return sigismember(&pending_set, SIGUSR1) || sigismember(&pending_set, SIGTERM);
 }
 
 void block_signal() {
@@ -91,12 +91,13 @@ void startDay(int serv, int semid_seats, int qid) {
 
     struct message_t msg_snd, msg_rcv;
 
-    while(!check_signal() && !flag_endDay){
+    while(!check_signal() && (!flag_endDay && !flag_endSim)){
 
         unblock_signal();
 
-        if(receive_msg(qid, &msg_rcv, serv) == -1)
+        if(receive_msg(qid, &msg_rcv, serv) == -1){
             break;
+        }
 
         block_signal();
         

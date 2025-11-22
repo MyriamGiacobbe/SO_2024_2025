@@ -36,7 +36,7 @@ int check_signal(){
         exit(EXIT_FAILURE);
     }
 
-    is_pending = sigismember(&pending_set, SIGUSR1);
+    is_pending = sigismember(&pending_set, SIGUSR1) || sigismember(&pending_set, SIGTERM);
 
     return is_pending;
 }
@@ -100,7 +100,7 @@ void startDay(int qid, int semid) {
     nanosleep(&t_hour, NULL);
 
     // controllo esistenza servizio
-    for(int i = 0; i < n_requests && !check_signal() && !flag_endDay; i++) {
+    for(int i = 0; i < n_requests && !check_signal() && (!flag_endDay && !flag_endSim); i++) {
         int num_serv = list_serv[i];
         if(datptr->serv_erog[num_serv-1] > 0) {
             msg_snd_to_erog.type_msg = NUM_SERV+1;
