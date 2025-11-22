@@ -171,6 +171,7 @@ void startDay(int qid, int semid) {
 }
 
 int main(int argc, char* argv[]) {
+    int num_giorni_passati = 0;
     setbuf(stdout, NULL);
 
     int key;

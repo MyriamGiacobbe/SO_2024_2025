@@ -13,7 +13,7 @@ struct sembuf sops;
 sigset_t new_mask, old_mask;
 int flag_endSim = 0;
 
-void reap_child_handler(int signum) {
+void signal_handler(int signum) {
     switch(signum){
         case SIGCHLD:
            while(waitpid(-1, NULL, WNOHANG) > 0);
@@ -55,9 +55,15 @@ int main(int argc, char* argv[]) {
 
     struct sigaction sa_chld;
     bzero(&sa_chld, sizeof(sa_chld));
-    sa_chld.sa_handler = reap_child_handler;
+    sa_chld.sa_handler = signal_handler;
     sa_chld.sa_flags = SA_RESTART | SA_NOCLDSTOP;
     sigaction(SIGCHLD, &sa_chld, NULL);
+
+    struct sigaction sa_end_sim;
+    bzero(&sa_end_sim, sizeof(sa_end_sim));
+    sa_end_sim.sa_handler = signal_handler;
+    sa_end_sim.sa_flags = 0;
+    sigaction(SIGTERM, &sa_end_sim, NULL);
     
     srand(time(NULL) + getpid());
 
