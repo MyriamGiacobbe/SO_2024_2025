@@ -7,7 +7,6 @@ int create_queue(key_t k) {
         ERROR
         exit(EXIT_FAILURE);
     }
-
     return qid;
 }
 
@@ -16,7 +15,6 @@ void send_msg(int qid, struct message_t *msg) {
         ERROR
         exit(EXIT_FAILURE);
     }
-
 }
 
 int receive_msg(int qid, struct message_t *msg, long mtype) {

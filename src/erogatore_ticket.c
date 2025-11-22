@@ -1,3 +1,5 @@
+#include "erogatore_ticket.h"
+
 #include <stdio.h>
 #include <unistd.h>
 #include <signal.h>
@@ -44,9 +46,7 @@ int eroga_ticket(int num_serv) {
 int main(int argc, char* argv[]) {
 
     struct message_t msg_rcv;
-    
     datptr = (Data*)attach_shm(atoi(argv[1]));
-    
     int qid = datptr->qid;
     
     struct sigaction sa;
@@ -67,11 +67,8 @@ int main(int argc, char* argv[]) {
     sigaction(SIGTERM, &sa_end_sim, NULL);
     
     srand(time(NULL) + getpid());
-
     reserve_sem(datptr->semid, 0);                      //fine inizializzazione processo
-
     sem_operation(sops, datptr->semid, 2, 0, 0, 1);     //per iniziare giornata aspetta padre
-
 
     while(!flag_endSim) {
         if(receive_msg(qid, &msg_rcv, NUM_SERV+1) == -1){
@@ -92,17 +89,15 @@ int main(int argc, char* argv[]) {
             msg_snd.pid = getpid();
 
             int serv = atoi(msg_rcv.msg);
-
             int time;
+
             if ((time = eroga_ticket(serv)) == -1) {
                 fprintf(stderr, "eroga_ticket failed\n");
                 exit(EXIT_FAILURE);
             }
 
             snprintf(msg_snd.msg, MSG_LENGTH, "%d", time);
-
             send_msg(qid, &msg_snd);
-
             detach_shm(datptr);
 
             exit(EXIT_SUCCESS);
