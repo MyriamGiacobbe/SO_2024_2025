@@ -19,7 +19,7 @@ void send_msg(int qid, struct message_t *msg) {
 
 int receive_msg(int qid, struct message_t *msg, long mtype) {
     if(msgrcv(qid, msg, MSG_LENGTH, mtype, 0) < 0) {
-        if(errno == EINTR)
+        if(errno == EINTR || EIDRM)
             return -1;
         ERROR
         exit(EXIT_FAILURE);
