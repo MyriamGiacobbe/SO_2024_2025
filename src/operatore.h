@@ -30,7 +30,7 @@ void unblock_signal();
 *
 *@return restituisce 1 se l'operatore va in in pausa, altrimenti 0
 */
-int goPause(int semnum, int semid_seats);
+int goPause();
 
 /**
 *@brief Inizia una giornata lavorativa

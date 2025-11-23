@@ -121,6 +121,9 @@ void startDay(int qid, int semid) {
 }
 
 int main(int argc, char* argv[]) {
+    /* Per distinguere gli utenti aggiunti dopo da quelli non.
+       Gli utenti nuovi NON devono riservare/rilasciare nessun semaforo inizializzato dal direttore */
+    int is_new_user = (argc > 3); 
     
     int semid = atoi(argv[2]);
     datptr = (Data*)attach_shm(atoi(argv[1]));
@@ -139,15 +142,19 @@ int main(int argc, char* argv[]) {
     sigaction(SIGTERM, &sa, NULL);
     
     srand(time(NULL) + getpid());
-    reserve_sem(datptr->semid, 0);                      //fine inizializzazione processo
+
+    if(!is_new_user)
+        reserve_sem(datptr->semid, 0);                      //fine inizializzazione processo
+
     sem_operation(sops, datptr->semid, 2, 0, 0, 1);     //per iniziare giornata aspetta padre
 
     startDay(qid, semid);
 
     while(!flag_endSim){
         if(flag_endDay) {
+            if(!is_new_user)
+                reserve_sem(datptr->semid, 1); //segnale gestito
 
-            reserve_sem(datptr->semid, 1); //segnale gestito 
             sem_operation(sops, datptr->semid, 2, 0, 0, 1); //inizio nuova giornata
             flag_endDay = 0;
             
@@ -157,7 +164,9 @@ int main(int argc, char* argv[]) {
             pause();
         }
     }
-    reserve_sem(datptr->semid, 1);
+    if(!is_new_user)
+        reserve_sem(datptr->semid, 1);
+    
     detach_shm(datptr);
 
     return 0;

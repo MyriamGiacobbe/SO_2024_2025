@@ -15,7 +15,8 @@ COMMON_OBJS =   $(BUILD_DIR)/semaphores.o\
 TARGETS =	$(BIN_DIR)/direttore \
 			$(BIN_DIR)/operatore \
 			$(BIN_DIR)/utente \
-			$(BIN_DIR)/erogatore
+			$(BIN_DIR)/erogatore \
+			$(BIN_DIR)/add_users
 
 .PHONY: all clean run explode timeout dirs
 
@@ -46,6 +47,9 @@ $(BIN_DIR)/utente: $(BUILD_DIR)/utente.o $(COMMON_OBJS)
 		$(CC) $(CFLAGS) $^ -o $@
 
 $(BIN_DIR)/erogatore: $(BUILD_DIR)/erogatore_ticket.o $(COMMON_OBJS)
+		$(CC) $(CFLAGS) $^ -o $@
+
+$(BIN_DIR)/add_users: $(BUILD_DIR)/add_users.o $(COMMON_OBJS)
 		$(CC) $(CFLAGS) $^ -o $@
 
 # Qui è come creare i .o dai .c

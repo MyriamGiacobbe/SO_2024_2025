@@ -1,7 +1,5 @@
 #ifndef DIRETTORE_H
 #define DIRETTORE_H
-#define TOTAL_CHILD NOF_WORKERS + NOF_USERS + 1
-#define WORKERS_USERS NOF_WORKERS + NOF_USERS
 
 #include <stdio.h>
 #include <sys/types.h>

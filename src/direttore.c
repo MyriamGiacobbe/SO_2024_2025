@@ -9,6 +9,10 @@
 #include <sys/shm.h>
 #include <sys/msg.h>
 #include <time.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include "common.h"
 #include "ipc/message_queue.h"
 #include "ipc/semaphores.h"
@@ -22,6 +26,9 @@ struct sembuf sops;
 char semid_op_str[32];
 char semid_ut_str[32];
 char shmid_str[32];
+
+const char *end_day = "day";
+const char *end_sim = "sim";
 
 int sportelli_esistenti = 0;
 
@@ -70,6 +77,14 @@ key_t generate_new_key(char c) {
 }
 
 int main() {
+    unlink(fifo_name);
+    /* Creazione FIFO per la comunicazione con add_users.c */
+    int fd;
+    if(mkfifo(fifo_name, 0666) == -1) {
+        perror("mkfifo");
+        exit(EXIT_FAILURE);
+    }
+
     FILE * file = fopen("../statistiche.csv", "w");
     if(file == NULL){
         perror("Unable to open file");
@@ -134,7 +149,6 @@ int main() {
     int flag_explode = 0;
 
     while(giorni_sim < SIM_DURATION){
-
         nanosleep(&t_day, NULL);
         release_sem(shared_data->semid, 2);  //ripristinare flag di inizio giornata
 
@@ -144,6 +158,15 @@ int main() {
             break;
         }
         #endif
+        
+        /*Apro in scrittura la FIFO ogni giorno per avvertire add_users: 
+          O_NONBLOCK serve per non far aspettare il direttore che add_users apra anche lui la fifo*/
+        if((fd = open(fifo_name, O_WRONLY | O_NONBLOCK)) == -1) {
+            if(errno != ENXIO)
+                perror("open");
+        }
+        write(fd, end_day, strlen(end_day) + 1);
+        close(fd);
 
         kill(-pgid, SIGUSR1);
         sem_operation(sops, shared_data->semid, 1, 0, 0, 1); //tutti finiscono giornata
@@ -154,6 +177,13 @@ int main() {
 
         giorni_sim++;
     }
+
+    if((fd = open(fifo_name, O_WRONLY | O_NONBLOCK)) == -1) {
+        if(errno != ENXIO)
+            perror("open");
+    }
+    write(fd, end_sim, strlen(end_sim) + 1);
+    close(fd);
 
     kill(-pgid, SIGTERM);
     sem_operation(sops, shared_data->semid, 1, 0, 0, 1);
