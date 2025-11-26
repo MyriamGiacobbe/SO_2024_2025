@@ -186,7 +186,7 @@ int main() {
     close(fd);
 
     kill(-pgid, SIGTERM);
-    sem_operation(sops, shared_data->semid, 1, 0, 0, 1);
+    while(wait(NULL) > 0);
     leggo_stat(file);
 
     if(flag_explode)

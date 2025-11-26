@@ -71,9 +71,8 @@ int main(int argc, char* argv[]) {
     sem_operation(sops, datptr->semid, 2, 0, 0, 1);     //per iniziare giornata aspetta padre
 
     while(!flag_endSim) {
-        if(receive_msg(qid, &msg_rcv, NUM_SERV+1) == -1){
+        if(receive_msg(qid, &msg_rcv, NUM_SERV+1) == -1)
             continue;
-        }
 
         pid_t pid = fork();
         if(pid == -1) {
@@ -105,6 +104,7 @@ int main(int argc, char* argv[]) {
     }
 
     detach_shm(datptr);
+    while(wait(NULL) > 0);
 
     return 0;
 }
