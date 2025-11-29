@@ -1,5 +1,5 @@
 #define SIM_DURATION  5
-#define N_NANO_SECS 8000000
+#define N_NANO_SECS 2000000
 #define NOF_USERS 30
 #define NOF_WORKERS 20
 #define NOF_WORKERS_SEATS 10

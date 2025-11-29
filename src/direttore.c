@@ -66,7 +66,7 @@ void create_process(char* file_name) {
         }
     }
 }
-
+/*
 key_t generate_new_key(char c) {
     key_t key;
     if((key = ftok(".", c)) == -1) {
@@ -75,7 +75,7 @@ key_t generate_new_key(char c) {
     }
     return key;
 }
-
+*/
 int main() {
     unlink(fifo_name);
     /* Creazione FIFO per la comunicazione con add_users.c */
@@ -96,6 +96,7 @@ int main() {
     }
     pgid = getpid();
 
+    srand(time(NULL) + getpid());
     //1. Inizializzazione risorse
     struct sigaction sa;
     bzero(&sa, sizeof(sa));
@@ -103,13 +104,13 @@ int main() {
     sigaction(SIGUSR1, &sa, NULL);
     sigaction(SIGTERM, &sa, NULL);
     
-    int semid_seats_op = create_sem(generate_new_key('D'), NUM_SERV);
+    int semid_seats_op = create_sem(KEY_SEM, NUM_SERV);
     int semid_seats_ut = create_sem(IPC_PRIVATE, NUM_SERV);
 
     for(int i = 0; i < NUM_SERV; i++)
         init_sem(semid_seats_ut, i, 1);
 
-    int shmid = create_shm(generate_new_key('I'), sizeof(Data));
+    int shmid = create_shm(KEY_SHM, sizeof(Data));
     shared_data = (Data*)attach_shm(shmid);
 
     shared_data->utenti_in_attesa = 0;
@@ -205,8 +206,8 @@ int main() {
 }
 
 void init_sportelli(int semid){
-
-    srand(time(NULL) + getpid());
+    memset(shared_data->operatore_sportello, 0, sizeof(shared_data->operatore_sportello));
+    
     int num_sportello = 0;
     int count = NOF_WORKERS_SEATS;
 
@@ -228,8 +229,10 @@ void init_sportelli(int semid){
         else{
             init_sem(semid, i, 0);
             shared_data->serv_erog[i] = 0;
-            shared_data->operatore_sportello[num_sportello][i] = 0;
-            num_sportello++;
+            if(num_sportello < NOF_WORKERS_SEATS){
+                shared_data->operatore_sportello[num_sportello][i] = 0;
+                num_sportello++;
+            }
         }
     }
 }

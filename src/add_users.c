@@ -17,6 +17,18 @@
 #include "ipc/semaphores.h"
 #include "ipc/shared_memory.h"
 
+
+//UNICO PROBLEMA: FARLO PARTIRE NEL MODO GIUSTO DIRETTORE
+
+
+
+
+
+
+
+
+
+/*
 key_t generate_new_key(char c) {
     key_t key;
     if((key = ftok(".", c)) == -1) {
@@ -26,7 +38,7 @@ key_t generate_new_key(char c) {
 
     return key;
 }
-
+*/
 int main(int argc, char* argv[]) {
 
     if(argc < 2) {
@@ -52,10 +64,26 @@ int main(int argc, char* argv[]) {
     sigaction(SIGUSR1, &sa, NULL);
     sigaction(SIGTERM, &sa, NULL);
 
-    int semid_seats = create_sem(generate_new_key('D'), NUM_SERV);
+    int semid_seats = create_sem(KEY_SEM, NUM_SERV);
     Data *shared_data;
-    int shmid = create_shm(generate_new_key('I'), sizeof(shared_data));
+    int shmid = create_shm(KEY_SHM, sizeof(Data));
     shared_data = (Data*)attach_shm(shmid);
+
+    // --- INIZIO DEBUG ---
+    printf("\n=== DEBUG ADD_USERS ===\n");
+    printf("SHM ID ottenuto: %d\n", shmid);
+    printf("Indirizzo memoria: %p\n", (void*)shared_data);
+    printf("Valore letto semid (Barriere): %d\n", shared_data->semid);
+    printf("Valore letto semid_seats (Operatori): %d\n", semid_seats);
+    
+    if (shared_data->semid == 0) {
+        printf("!!! ERRORE CRITICO: Sto leggendo semid=0.\n");
+        printf("!!! CAUSA 1: Mi sono collegato a una SHM nuova/vuota (problema chiavi).\n");
+        printf("!!! CAUSA 2: Il direttore non ha ancora scritto in memoria.\n");
+        exit(1); // Esco subito per non generare errori a catena
+    }
+    printf("=== FINE DEBUG ===\n\n");
+    // --- FINE DEBUG ---
 
     char shmid_str[32];
     snprintf(shmid_str, 32, "%d", shmid);
@@ -75,8 +103,8 @@ int main(int argc, char* argv[]) {
                 perror("setpgid add_users");
                 exit(EXIT_FAILURE);
             }
-            execvp("../bin/utente", args);
-            perror("execvp operatore");
+            execvp("./utente", args);
+            perror("execvp utente");
             exit(EXIT_FAILURE);
         }
     }
@@ -102,8 +130,8 @@ int main(int argc, char* argv[]) {
             break;
         }
     }
-    detach_shm(shared_data);
     while(wait(NULL) > 0);
+    detach_shm(shared_data);
 
     return 0;
 }

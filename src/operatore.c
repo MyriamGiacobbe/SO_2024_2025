@@ -41,14 +41,19 @@ int goPause() {
 }
 
 void startDay(int serv, int semid_seats, int qid) {
-    if(flag_endDay) 
+    if(flag_endDay){
         return;
-
-    if(reserve_sem(semid_seats, serv-1) == -1)
+    }
+    if(flag_endSim){
         return;
+    }
+    if(reserve_sem(semid_seats, serv-1) == -1){
+        return;
+    }
 
     block_signal();
     reserve_sem(datptr->semid, 3);
+    
     int flag_sportello = 0;
     int n_sportello = 0;
 
@@ -59,6 +64,7 @@ void startDay(int serv, int semid_seats, int qid) {
             datptr->stat.operatore_sportello_giorno[n_sportello] += 1;
         }
     }
+    n_sportello--;
 
     release_sem(datptr->semid, 3);
     n_attivi ++;
@@ -66,9 +72,12 @@ void startDay(int serv, int semid_seats, int qid) {
 
     while(!check_signal() && (!flag_endDay && !flag_endSim)){
         unblock_signal();
+    
+        if(flag_endSim) return;
 
-        if(receive_msg(qid, &msg_rcv, serv) == -1)
+        if(receive_msg(qid, &msg_rcv, serv) == -1){
             break;
+        }
 
         block_signal();
         
@@ -78,6 +87,7 @@ void startDay(int serv, int semid_seats, int qid) {
         t_hour.tv_nsec = 0;
         
         nanosleep(&t_hour, NULL);
+        
         msg_snd.type_msg = msg_rcv.pid;
         msg_snd.pid = getpid();
         
@@ -86,18 +96,15 @@ void startDay(int serv, int semid_seats, int qid) {
 
         if(goPause()){
             n_pause++;
-
             reserve_sem(datptr->semid, 3);
             datptr->operatore_sportello[n_sportello][serv-1] = 1;
             release_sem(datptr->semid, 3);
 
             release_sem(semid_seats, serv-1);
-
             unblock_signal();
             return;
         }
     }
-
     unblock_signal();
     release_sem(semid_seats, serv-1);
 }
@@ -123,17 +130,16 @@ int main(int argc, char* argv[]) {
 
     reserve_sem(datptr->semid, 0);                      //fine inizializzazione processo
     sem_operation(sops, datptr->semid, 2, 0, 0, 1);     //per iniziare giornata aspetta padre
-    
     startDay(serv, atoi(argv[2]), qid);
 
     while(!flag_endSim){
-        if(flag_endDay) {
 
+        if(flag_endDay) {
             reserve_sem(datptr->semid, 3);
             scrivo_stat();
             release_sem(datptr->semid, 3);
-
             reserve_sem(datptr->semid, 1); //segnale gestito
+
             sem_operation(sops, datptr->semid, 2, 0, 0, 1); //inizio nuova giornata
 
             n_attivi = 0;
@@ -141,17 +147,15 @@ int main(int argc, char* argv[]) {
             flag_endDay = 0;
 
             startDay(serv, atoi(argv[2]), qid);
-
+            
         } else {
-            pause();
+            sigsuspend(&old_mask);
         }
     }
-
     reserve_sem(datptr->semid, 3);
     scrivo_stat();
     release_sem(datptr->semid, 3);
-
-    reserve_sem(datptr->semid, 1);
+    //reserve_sem(datptr->semid, 1);
     detach_shm(datptr);
 
     return 0;

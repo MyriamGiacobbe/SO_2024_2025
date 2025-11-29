@@ -12,7 +12,7 @@ int create_shm(key_t k, size_t size) {
 
 void* attach_shm(int shmid) {
     void* shared_data = (void*)shmat(shmid, NULL, 0);
-    if(errno) {
+    if(errno){
         ERROR
         exit(EXIT_FAILURE);
     }

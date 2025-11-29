@@ -103,8 +103,8 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    detach_shm(datptr);
     while(wait(NULL) > 0);
+    detach_shm(datptr);
 
     return 0;
 }

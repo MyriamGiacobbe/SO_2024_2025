@@ -17,6 +17,9 @@
 #define WORKERS_USERS NOF_WORKERS + NOF_USERS
 #define NUM_SERV 6
 
+#define KEY_SEM  2024
+#define KEY_SHM  2025
+
 const char *fifo_name = "my_fifo";
 
 typedef struct {

@@ -16,6 +16,7 @@ Data* datptr;
 struct sembuf sops;
 int flag_endDay = 0, flag_endSim = 0;
 sigset_t new_mask, old_mask;
+int num_serv = 0;
 
 void signal_handler(int signum){
     switch(signum) {
@@ -30,11 +31,16 @@ void signal_handler(int signum){
 
 void startDay(int qid, int semid) {    
     double p_serv = (double)rand() / RAND_MAX;
-
+    if(flag_endDay){
+        return;
+    }
+    if(flag_endSim){
+        return;
+    }
     if(p_serv < P_SERV_MIN || p_serv > P_SERV_MAX) {
         return;
     }
-
+    
     block_signal();
 
     struct message_t msg_snd_to_erog, msg_rcv_from_erog;
@@ -42,7 +48,6 @@ void startDay(int qid, int semid) {
     int list_serv[n_requests];
 
     crea_lista_serv(list_serv, n_requests);
-
     int ora = rand() % 10;
 
     long nanosec_per_hour = (long)N_NANO_SECS * ora * 60;
@@ -62,9 +67,9 @@ void startDay(int qid, int semid) {
             send_msg(qid, &msg_snd_to_erog);
             
             unblock_signal();
+            if(flag_endSim) return;
 
             if(receive_msg(qid, &msg_rcv_from_erog, getpid()) == -1) {
-
                 reserve_sem(datptr->semid, 3);
                 datptr->stat.n_serv_non_erog[num_serv-1] += 1;
                 release_sem(datptr->semid, 3);
@@ -87,9 +92,11 @@ void startDay(int qid, int semid) {
             release_sem(datptr->semid, 3);
 
             unblock_signal();
+            if(flag_endSim) return;
 
-            if(reserve_sem(semid, num_serv-1) == -1)
+            if(reserve_sem(semid, num_serv-1) == -1){
                 return;
+            }
 
             struct message_t msg_snd_to_op, msg_rcv_from_op;
 
@@ -99,8 +106,9 @@ void startDay(int qid, int semid) {
             snprintf(msg_snd_to_op.msg, MSG_LENGTH, "%d", time);
             send_msg(qid, &msg_snd_to_op);
 
-            if (receive_msg(qid, &msg_rcv_from_op, getpid()) == -1)
+            if (receive_msg(qid, &msg_rcv_from_op, getpid()) == -1){
                 break;
+            }
 
             block_signal();
 
@@ -114,10 +122,13 @@ void startDay(int qid, int semid) {
             datptr->stat.n_utenti_serviti[num_serv-1] += 1;
             datptr->stat.t_attesa_utenti[num_serv-1] += attesa;
             release_sem(datptr->semid, 3);
+
+            unblock_signal();
         }
     }
-    
+
     unblock_signal();
+    
 }
 
 int main(int argc, char* argv[]) {
@@ -147,26 +158,24 @@ int main(int argc, char* argv[]) {
         reserve_sem(datptr->semid, 0);                      //fine inizializzazione processo
 
     sem_operation(sops, datptr->semid, 2, 0, 0, 1);     //per iniziare giornata aspetta padre
-
     startDay(qid, semid);
 
     while(!flag_endSim){
-        if(flag_endDay) {
-            if(!is_new_user)
-                reserve_sem(datptr->semid, 1); //segnale gestito
 
+        if(flag_endDay) {
+            if(!is_new_user){
+                reserve_sem(datptr->semid, 1); //segnale gestito
+            }
             sem_operation(sops, datptr->semid, 2, 0, 0, 1); //inizio nuova giornata
             flag_endDay = 0;
-            
-            startDay(qid, semid);
 
+            startDay(qid, semid);
+            
         } else {
-            pause();
+            sigsuspend(&old_mask);
         }
     }
-    if(!is_new_user)
-        reserve_sem(datptr->semid, 1);
-    
+    //reserve_sem(datptr->semid, 1);
     detach_shm(datptr);
 
     return 0;
