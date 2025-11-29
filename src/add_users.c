@@ -17,28 +17,6 @@
 #include "ipc/semaphores.h"
 #include "ipc/shared_memory.h"
 
-
-//UNICO PROBLEMA: FARLO PARTIRE NEL MODO GIUSTO DIRETTORE
-
-
-
-
-
-
-
-
-
-/*
-key_t generate_new_key(char c) {
-    key_t key;
-    if((key = ftok(".", c)) == -1) {
-        perror("ftok");
-        exit(EXIT_FAILURE);
-    }
-
-    return key;
-}
-*/
 int main(int argc, char* argv[]) {
 
     if(argc < 2) {
@@ -68,22 +46,6 @@ int main(int argc, char* argv[]) {
     Data *shared_data;
     int shmid = create_shm(KEY_SHM, sizeof(Data));
     shared_data = (Data*)attach_shm(shmid);
-
-    // --- INIZIO DEBUG ---
-    printf("\n=== DEBUG ADD_USERS ===\n");
-    printf("SHM ID ottenuto: %d\n", shmid);
-    printf("Indirizzo memoria: %p\n", (void*)shared_data);
-    printf("Valore letto semid (Barriere): %d\n", shared_data->semid);
-    printf("Valore letto semid_seats (Operatori): %d\n", semid_seats);
-    
-    if (shared_data->semid == 0) {
-        printf("!!! ERRORE CRITICO: Sto leggendo semid=0.\n");
-        printf("!!! CAUSA 1: Mi sono collegato a una SHM nuova/vuota (problema chiavi).\n");
-        printf("!!! CAUSA 2: Il direttore non ha ancora scritto in memoria.\n");
-        exit(1); // Esco subito per non generare errori a catena
-    }
-    printf("=== FINE DEBUG ===\n\n");
-    // --- FINE DEBUG ---
 
     char shmid_str[32];
     snprintf(shmid_str, 32, "%d", shmid);

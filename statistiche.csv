@@ -1,26 +1,26 @@
 --GIORNO 1--
 
 STATISTICA 1: numero di utenti serviti totali nella simulazione
-servizio 1: 0
-servizio 2: 9
+servizio 1: 3
+servizio 2: 16
 servizio 3: 0
-servizio 4: 8
+servizio 4: 0
 servizio 5: 0
 servizio 6: 0
 
 STATISTICA 2: numero di utenti serviti in media al giorno
-servizio 1: 0.00
-servizio 2: 9.00
+servizio 1: 3.00
+servizio 2: 16.00
 servizio 3: 0.00
-servizio 4: 8.00
+servizio 4: 0.00
 servizio 5: 0.00
 servizio 6: 0.00
 
 STATISTICA 3: numero di servizi erogati totali nella simulazione
-servizio 1: 0
-servizio 2: 9
+servizio 1: 25
+servizio 2: 22
 servizio 3: 0
-servizio 4: 8
+servizio 4: 0
 servizio 5: 0
 servizio 6: 0
 
@@ -33,10 +33,10 @@ servizio 5: 0
 servizio 6: 0
 
 STATISTICA 5: numero di servizi erogati in media al giorno
-servizio 1: 0.00
-servizio 2: 9.00
+servizio 1: 25.00
+servizio 2: 22.00
 servizio 3: 0.00
-servizio 4: 8.00
+servizio 4: 0.00
 servizio 5: 0.00
 servizio 6: 0.00
 
@@ -49,482 +49,164 @@ servizio 5: 0.00
 servizio 6: 0.00
 
 STATISTICA 7: tempo medio di attesa di utenti nella simulazione
-servizio 1: 0.000000 secondi
-servizio 2: 0.000063 secondi
+servizio 1: 0.000022 secondi
+servizio 2: 0.000138 secondi
 servizio 3: 0.000000 secondi
-servizio 4: 0.000061 secondi
+servizio 4: 0.000000 secondi
 servizio 5: 0.000000 secondi
 servizio 6: 0.000000 secondi
 
 STATISTICA 8: tempo medio di attesa di utenti nella giornata
-servizio 1: 0.000000 secondi
-servizio 2: 0.000317 secondi
+servizio 1: 0.000108 secondi
+servizio 2: 0.000689 secondi
 servizio 3: 0.000000 secondi
-servizio 4: 0.000307 secondi
+servizio 4: 0.000000 secondi
 servizio 5: 0.000000 secondi
 servizio 6: 0.000000 secondi
 
 STATISTICA 9: tempo medio di erogazione dei servizi nella simulazione
-servizio 1: 0 minuti
-servizio 2: 10.2 minuti
+servizio 1: 10.3 minuti
+servizio 2: 7.3 minuti
 servizio 3: 0 minuti
-servizio 4: 8.5 minuti
+servizio 4: 0 minuti
 servizio 5: 0 minuti
 servizio 6: 0 minuti
 
 STATISTICA 10: tempo medio di erogazione dei servizi nella giornata
-servizio 1: 0.0 minuti
-servizio 2: 10.2 minuti
+servizio 1: 10.3 minuti
+servizio 2: 7.3 minuti
 servizio 3: 0.0 minuti
-servizio 4: 8.5 minuti
+servizio 4: 0.0 minuti
 servizio 5: 0.0 minuti
-servizio 6: 0.0 minuti
-
-STATISTICA 11: numero di operatori attivi durante la giornata
-8
-
-STATISTICA 12: numero di operatori attivi durante la simulazione:
-8
-
-STATISTICA 13: numero medio di pause effettuate nella giornata
-4.00
-
-STATISTICA 14: numero totale di pause effettuate nella simulazione
-4
-
-STATISTICA 15: rapporto tra operatori disponibili e sportelli esistenti
-operatori / sportello 1: 0.00
-operatori / sportello 2: 0.06
-operatori / sportello 3: 0.11
-operatori / sportello 4: 0.06
-operatori / sportello 5: 0.00
-operatori / sportello 6: 0.06
-operatori / sportello 7: 0.06
-operatori / sportello 8: 0.06
-operatori / sportello 9: 0.06
-operatori / sportello 10: 0.00
-
---GIORNO 2--
-
-STATISTICA 1: numero di utenti serviti totali nella simulazione
-servizio 1: 8
-servizio 2: 9
-servizio 3: 0
-servizio 4: 8
-servizio 5: 0
-servizio 6: 0
-
-STATISTICA 2: numero di utenti serviti in media al giorno
-servizio 1: 4.00
-servizio 2: 4.50
-servizio 3: 0.00
-servizio 4: 4.00
-servizio 5: 0.00
-servizio 6: 0.00
-
-STATISTICA 3: numero di servizi erogati totali nella simulazione
-servizio 1: 8
-servizio 2: 9
-servizio 3: 0
-servizio 4: 8
-servizio 5: 0
-servizio 6: 0
-
-STATISTICA 4: numero di servizi NON erogati totali nella simulazione
-servizio 1: 0
-servizio 2: 0
-servizio 3: 0
-servizio 4: 0
-servizio 5: 0
-servizio 6: 0
-
-STATISTICA 5: numero di servizi erogati in media al giorno
-servizio 1: 4.00
-servizio 2: 4.50
-servizio 3: 0.00
-servizio 4: 4.00
-servizio 5: 0.00
-servizio 6: 0.00
-
-STATISTICA 6: numero di servizi NON erogati in media al giorno
-servizio 1: 0.00
-servizio 2: 0.00
-servizio 3: 0.00
-servizio 4: 0.00
-servizio 5: 0.00
-servizio 6: 0.00
-
-STATISTICA 7: tempo medio di attesa di utenti nella simulazione
-servizio 1: 0.000098 secondi
-servizio 2: 0.000063 secondi
-servizio 3: 0.000000 secondi
-servizio 4: 0.000061 secondi
-servizio 5: 0.000000 secondi
-servizio 6: 0.000000 secondi
-
-STATISTICA 8: tempo medio di attesa di utenti nella giornata
-servizio 1: 0.000246 secondi
-servizio 2: 0.000159 secondi
-servizio 3: 0.000000 secondi
-servizio 4: 0.000154 secondi
-servizio 5: 0.000000 secondi
-servizio 6: 0.000000 secondi
-
-STATISTICA 9: tempo medio di erogazione dei servizi nella simulazione
-servizio 1: 4.9 minuti
-servizio 2: 5.1 minuti
-servizio 3: 0 minuti
-servizio 4: 4.2 minuti
-servizio 5: 0 minuti
-servizio 6: 0 minuti
-
-STATISTICA 10: tempo medio di erogazione dei servizi nella giornata
-servizio 1: 9.9 minuti
-servizio 2: 10.2 minuti
-servizio 3: 0.0 minuti
-servizio 4: 8.5 minuti
-servizio 5: 0.0 minuti
-servizio 6: 0.0 minuti
-
-STATISTICA 11: numero di operatori attivi durante la giornata
-2
-
-STATISTICA 12: numero di operatori attivi durante la simulazione:
-10
-
-STATISTICA 13: numero medio di pause effettuate nella giornata
-3.00
-
-STATISTICA 14: numero totale di pause effettuate nella simulazione
-6
-
-STATISTICA 15: rapporto tra operatori disponibili e sportelli esistenti
-operatori / sportello 1: 0.04
-operatori / sportello 2: 0.04
-operatori / sportello 3: 0.00
-operatori / sportello 4: 0.00
-operatori / sportello 5: 0.00
-operatori / sportello 6: 0.00
-operatori / sportello 7: 0.00
-operatori / sportello 8: 0.00
-operatori / sportello 9: 0.00
-operatori / sportello 10: 0.00
-
---GIORNO 3--
-
-STATISTICA 1: numero di utenti serviti totali nella simulazione
-servizio 1: 8
-servizio 2: 20
-servizio 3: 3
-servizio 4: 8
-servizio 5: 0
-servizio 6: 0
-
-STATISTICA 2: numero di utenti serviti in media al giorno
-servizio 1: 2.67
-servizio 2: 6.67
-servizio 3: 1.00
-servizio 4: 2.67
-servizio 5: 0.00
-servizio 6: 0.00
-
-STATISTICA 3: numero di servizi erogati totali nella simulazione
-servizio 1: 8
-servizio 2: 20
-servizio 3: 6
-servizio 4: 8
-servizio 5: 0
-servizio 6: 0
-
-STATISTICA 4: numero di servizi NON erogati totali nella simulazione
-servizio 1: 0
-servizio 2: 0
-servizio 3: 0
-servizio 4: 0
-servizio 5: 0
-servizio 6: 0
-
-STATISTICA 5: numero di servizi erogati in media al giorno
-servizio 1: 2.67
-servizio 2: 6.67
-servizio 3: 2.00
-servizio 4: 2.67
-servizio 5: 0.00
-servizio 6: 0.00
-
-STATISTICA 6: numero di servizi NON erogati in media al giorno
-servizio 1: 0.00
-servizio 2: 0.00
-servizio 3: 0.00
-servizio 4: 0.00
-servizio 5: 0.00
-servizio 6: 0.00
-
-STATISTICA 7: tempo medio di attesa di utenti nella simulazione
-servizio 1: 0.000098 secondi
-servizio 2: 0.000208 secondi
-servizio 3: 0.000033 secondi
-servizio 4: 0.000061 secondi
-servizio 5: 0.000000 secondi
-servizio 6: 0.000000 secondi
-
-STATISTICA 8: tempo medio di attesa di utenti nella giornata
-servizio 1: 0.000164 secondi
-servizio 2: 0.000346 secondi
-servizio 3: 0.000054 secondi
-servizio 4: 0.000102 secondi
-servizio 5: 0.000000 secondi
-servizio 6: 0.000000 secondi
-
-STATISTICA 9: tempo medio di erogazione dei servizi nella simulazione
-servizio 1: 3.3 minuti
-servizio 2: 3.0 minuti
-servizio 3: 2.2 minuti
-servizio 4: 2.8 minuti
-servizio 5: 0 minuti
-servizio 6: 0 minuti
-
-STATISTICA 10: tempo medio di erogazione dei servizi nella giornata
-servizio 1: 9.9 minuti
-servizio 2: 8.9 minuti
-servizio 3: 6.5 minuti
-servizio 4: 8.5 minuti
-servizio 5: 0.0 minuti
-servizio 6: 0.0 minuti
-
-STATISTICA 11: numero di operatori attivi durante la giornata
-5
-
-STATISTICA 12: numero di operatori attivi durante la simulazione:
-15
-
-STATISTICA 13: numero medio di pause effettuate nella giornata
-3.33
-
-STATISTICA 14: numero totale di pause effettuate nella simulazione
-10
-
-STATISTICA 15: rapporto tra operatori disponibili e sportelli esistenti
-operatori / sportello 1: 0.00
-operatori / sportello 2: 0.03
-operatori / sportello 3: 0.06
-operatori / sportello 4: 0.03
-operatori / sportello 5: 0.03
-operatori / sportello 6: 0.00
-operatori / sportello 7: 0.00
-operatori / sportello 8: 0.00
-operatori / sportello 9: 0.00
-operatori / sportello 10: 0.00
-
---GIORNO 4--
-
-STATISTICA 1: numero di utenti serviti totali nella simulazione
-servizio 1: 11
-servizio 2: 20
-servizio 3: 3
-servizio 4: 13
-servizio 5: 7
-servizio 6: 0
-
-STATISTICA 2: numero di utenti serviti in media al giorno
-servizio 1: 2.75
-servizio 2: 5.00
-servizio 3: 0.75
-servizio 4: 3.25
-servizio 5: 1.75
-servizio 6: 0.00
-
-STATISTICA 3: numero di servizi erogati totali nella simulazione
-servizio 1: 11
-servizio 2: 20
-servizio 3: 15
-servizio 4: 13
-servizio 5: 7
-servizio 6: 0
-
-STATISTICA 4: numero di servizi NON erogati totali nella simulazione
-servizio 1: 0
-servizio 2: 0
-servizio 3: 0
-servizio 4: 0
-servizio 5: 0
-servizio 6: 0
-
-STATISTICA 5: numero di servizi erogati in media al giorno
-servizio 1: 2.75
-servizio 2: 5.00
-servizio 3: 3.75
-servizio 4: 3.25
-servizio 5: 1.75
-servizio 6: 0.00
-
-STATISTICA 6: numero di servizi NON erogati in media al giorno
-servizio 1: 0.00
-servizio 2: 0.00
-servizio 3: 0.00
-servizio 4: 0.00
-servizio 5: 0.00
-servizio 6: 0.00
-
-STATISTICA 7: tempo medio di attesa di utenti nella simulazione
-servizio 1: 0.000131 secondi
-servizio 2: 0.000208 secondi
-servizio 3: 0.000033 secondi
-servizio 4: 0.000108 secondi
-servizio 5: 0.000072 secondi
-servizio 6: 0.000000 secondi
-
-STATISTICA 8: tempo medio di attesa di utenti nella giornata
-servizio 1: 0.000164 secondi
-servizio 2: 0.000259 secondi
-servizio 3: 0.000041 secondi
-servizio 4: 0.000136 secondi
-servizio 5: 0.000090 secondi
-servizio 6: 0.000000 secondi
-
-STATISTICA 9: tempo medio di erogazione dei servizi nella simulazione
-servizio 1: 2.3 minuti
-servizio 2: 2.2 minuti
-servizio 3: 1.4 minuti
-servizio 4: 2.1 minuti
-servizio 5: 5.2 minuti
-servizio 6: 0 minuti
-
-STATISTICA 10: tempo medio di erogazione dei servizi nella giornata
-servizio 1: 9.2 minuti
-servizio 2: 8.9 minuti
-servizio 3: 5.4 minuti
-servizio 4: 8.5 minuti
-servizio 5: 20.7 minuti
-servizio 6: 0.0 minuti
-
-STATISTICA 11: numero di operatori attivi durante la giornata
-9
-
-STATISTICA 12: numero di operatori attivi durante la simulazione:
-24
-
-STATISTICA 13: numero medio di pause effettuate nella giornata
-3.50
-
-STATISTICA 14: numero totale di pause effettuate nella simulazione
-14
-
-STATISTICA 15: rapporto tra operatori disponibili e sportelli esistenti
-operatori / sportello 1: 0.02
-operatori / sportello 2: 0.00
-operatori / sportello 3: 0.02
-operatori / sportello 4: 0.00
-operatori / sportello 5: 0.00
-operatori / sportello 6: 0.00
-operatori / sportello 7: 0.00
-operatori / sportello 8: 0.00
-operatori / sportello 9: 0.04
-operatori / sportello 10: 0.07
-
---GIORNO 5--
-
-STATISTICA 1: numero di utenti serviti totali nella simulazione
-servizio 1: 11
-servizio 2: 20
-servizio 3: 3
-servizio 4: 13
-servizio 5: 7
-servizio 6: 0
-
-STATISTICA 2: numero di utenti serviti in media al giorno
-servizio 1: 2.20
-servizio 2: 4.00
-servizio 3: 0.60
-servizio 4: 2.60
-servizio 5: 1.40
-servizio 6: 0.00
-
-STATISTICA 3: numero di servizi erogati totali nella simulazione
-servizio 1: 11
-servizio 2: 21
-servizio 3: 15
-servizio 4: 13
-servizio 5: 7
-servizio 6: 0
-
-STATISTICA 4: numero di servizi NON erogati totali nella simulazione
-servizio 1: 4
-servizio 2: 4
-servizio 3: 6
-servizio 4: 0
-servizio 5: 4
-servizio 6: 0
-
-STATISTICA 5: numero di servizi erogati in media al giorno
-servizio 1: 2.20
-servizio 2: 4.20
-servizio 3: 3.00
-servizio 4: 2.60
-servizio 5: 1.40
-servizio 6: 0.00
-
-STATISTICA 6: numero di servizi NON erogati in media al giorno
-servizio 1: 0.80
-servizio 2: 0.80
-servizio 3: 1.20
-servizio 4: 0.00
-servizio 5: 0.80
-servizio 6: 0.00
-
-STATISTICA 7: tempo medio di attesa di utenti nella simulazione
-servizio 1: 0.000131 secondi
-servizio 2: 0.000208 secondi
-servizio 3: 0.000033 secondi
-servizio 4: 0.000108 secondi
-servizio 5: 0.000072 secondi
-servizio 6: 0.000000 secondi
-
-STATISTICA 8: tempo medio di attesa di utenti nella giornata
-servizio 1: 0.000131 secondi
-servizio 2: 0.000208 secondi
-servizio 3: 0.000033 secondi
-servizio 4: 0.000108 secondi
-servizio 5: 0.000072 secondi
-servizio 6: 0.000000 secondi
-
-STATISTICA 9: tempo medio di erogazione dei servizi nella simulazione
-servizio 1: 3.7 minuti
-servizio 2: 3.5 minuti
-servizio 3: 2.2 minuti
-servizio 4: 1.7 minuti
-servizio 5: 8.3 minuti
-servizio 6: 0 minuti
-
-STATISTICA 10: tempo medio di erogazione dei servizi nella giornata
-servizio 1: 18.4 minuti
-servizio 2: 17.4 minuti
-servizio 3: 10.8 minuti
-servizio 4: 8.5 minuti
-servizio 5: 41.4 minuti
 servizio 6: 0.0 minuti
 
 STATISTICA 11: numero di operatori attivi durante la giornata
 7
 
 STATISTICA 12: numero di operatori attivi durante la simulazione:
-31
+7
 
 STATISTICA 13: numero medio di pause effettuate nella giornata
 3.00
 
 STATISTICA 14: numero totale di pause effettuate nella simulazione
-15
+3
 
 STATISTICA 15: rapporto tra operatori disponibili e sportelli esistenti
-operatori / sportello 1: 0.02
-operatori / sportello 2: 0.02
+operatori / sportello 1: 0.05
+operatori / sportello 2: 0.00
 operatori / sportello 3: 0.00
 operatori / sportello 4: 0.00
 operatori / sportello 5: 0.00
 operatori / sportello 6: 0.00
-operatori / sportello 7: 0.02
-operatori / sportello 8: 0.02
-operatori / sportello 9: 0.02
-operatori / sportello 10: 0.00
+operatori / sportello 7: 0.05
+operatori / sportello 8: 0.05
+operatori / sportello 9: 0.05
+operatori / sportello 10: 0.11
+
+--GIORNO 2--
+
+STATISTICA 1: numero di utenti serviti totali nella simulazione
+servizio 1: 3
+servizio 2: 13
+servizio 3: 0
+servizio 4: 10
+servizio 5: 0
+servizio 6: 0
+
+STATISTICA 2: numero di utenti serviti in media al giorno
+servizio 1: 1.50
+servizio 2: 6.50
+servizio 3: 0.00
+servizio 4: 5.00
+servizio 5: 0.00
+servizio 6: 0.00
+
+STATISTICA 3: numero di servizi erogati totali nella simulazione
+servizio 1: 40
+servizio 2: 43
+servizio 3: 0
+servizio 4: 25
+servizio 5: 0
+servizio 6: 0
+
+STATISTICA 4: numero di servizi NON erogati totali nella simulazione
+servizio 1: 0
+servizio 2: 0
+servizio 3: 0
+servizio 4: 0
+servizio 5: 0
+servizio 6: 0
+
+STATISTICA 5: numero di servizi erogati in media al giorno
+servizio 1: 20.00
+servizio 2: 21.50
+servizio 3: 0.00
+servizio 4: 12.50
+servizio 5: 0.00
+servizio 6: 0.00
+
+STATISTICA 6: numero di servizi NON erogati in media al giorno
+servizio 1: 0.00
+servizio 2: 0.00
+servizio 3: 0.00
+servizio 4: 0.00
+servizio 5: 0.00
+servizio 6: 0.00
+
+STATISTICA 7: tempo medio di attesa di utenti nella simulazione
+servizio 1: 0.000022 secondi
+servizio 2: 0.000298 secondi
+servizio 3: 0.000000 secondi
+servizio 4: 0.000089 secondi
+servizio 5: 0.000000 secondi
+servizio 6: 0.000000 secondi
+
+STATISTICA 8: tempo medio di attesa di utenti nella giornata
+servizio 1: 0.000054 secondi
+servizio 2: 0.000744 secondi
+servizio 3: 0.000000 secondi
+servizio 4: 0.000222 secondi
+servizio 5: 0.000000 secondi
+servizio 6: 0.000000 secondi
+
+STATISTICA 9: tempo medio di erogazione dei servizi nella simulazione
+servizio 1: 10.1 minuti
+servizio 2: 3.9 minuti
+servizio 3: 0 minuti
+servizio 4: 4.0 minuti
+servizio 5: 0 minuti
+servizio 6: 0 minuti
+
+STATISTICA 10: tempo medio di erogazione dei servizi nella giornata
+servizio 1: 20.3 minuti
+servizio 2: 7.9 minuti
+servizio 3: 0.0 minuti
+servizio 4: 8.0 minuti
+servizio 5: 0.0 minuti
+servizio 6: 0.0 minuti
+
+STATISTICA 11: numero di operatori attivi durante la giornata
+10
+
+STATISTICA 12: numero di operatori attivi durante la simulazione:
+17
+
+STATISTICA 13: numero medio di pause effettuate nella giornata
+6.50
+
+STATISTICA 14: numero totale di pause effettuate nella simulazione
+13
+
+STATISTICA 15: rapporto tra operatori disponibili e sportelli esistenti
+operatori / sportello 1: 0.05
+operatori / sportello 2: 0.00
+operatori / sportello 3: 0.00
+operatori / sportello 4: 0.00
+operatori / sportello 5: 0.00
+operatori / sportello 6: 0.00
+operatori / sportello 7: 0.00
+operatori / sportello 8: 0.05
+operatori / sportello 9: 0.05
+operatori / sportello 10: 0.11
 

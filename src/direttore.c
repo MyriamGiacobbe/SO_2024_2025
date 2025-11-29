@@ -66,16 +66,7 @@ void create_process(char* file_name) {
         }
     }
 }
-/*
-key_t generate_new_key(char c) {
-    key_t key;
-    if((key = ftok(".", c)) == -1) {
-        perror("ftok");
-        exit(EXIT_FAILURE);
-    }
-    return key;
-}
-*/
+
 int main() {
     unlink(fifo_name);
     /* Creazione FIFO per la comunicazione con add_users.c */
@@ -146,19 +137,25 @@ int main() {
     t_day.tv_nsec = nanosec_per_day % 1000000000;
     
     reserve_sem(shared_data->semid, 2);  //tutti iniziano giornata
-
+    
+    int n_users_waiting = 0;
     int flag_explode = 0;
-
     while(giorni_sim < SIM_DURATION){
         nanosleep(&t_day, NULL);
         release_sem(shared_data->semid, 2);  //ripristinare flag di inizio giornata
 
         #ifdef EXPLODE
-        if(shared_data->utenti_in_attesa > EXPLODE_THRESHOLD) {
+        reserve_sem(shared_data->semid, 3);
+        n_users_waiting = shared_data->utenti_in_attesa;
+        release_sem(shared_data->semid, 3);
+
+        if(n_users_waiting > EXPLODE_THRESHOLD) {
             flag_explode = 1;
             break;
         }
         #endif
+
+        n_users_waiting = 0;
         
         /*Apro in scrittura la FIFO ogni giorno per avvertire add_users: 
           O_NONBLOCK serve per non far aspettare il direttore che add_users apra anche lui la fifo*/
