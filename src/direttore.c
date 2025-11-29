@@ -137,8 +137,11 @@ int main() {
     t_day.tv_nsec = nanosec_per_day % 1000000000;
     
     reserve_sem(shared_data->semid, 2);  //tutti iniziano giornata
-    
+
+    #ifdef EXPLODE
     int n_users_waiting = 0;
+    #endif
+    
     int flag_explode = 0;
     while(giorni_sim < SIM_DURATION){
         nanosleep(&t_day, NULL);
@@ -153,9 +156,8 @@ int main() {
             flag_explode = 1;
             break;
         }
-        #endif
-
         n_users_waiting = 0;
+        #endif
         
         /*Apro in scrittura la FIFO ogni giorno per avvertire add_users: 
           O_NONBLOCK serve per non far aspettare il direttore che add_users apra anche lui la fifo*/
