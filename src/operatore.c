@@ -64,7 +64,6 @@ void startDay(int serv, int semid_seats, int qid) {
             datptr->stat.operatore_sportello_giorno[n_sportello] += 1;
         }
     }
-    //n_sportello--;
 
     release_sem(datptr->semid, 3);
     n_attivi ++;

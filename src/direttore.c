@@ -137,10 +137,6 @@ int main() {
     t_day.tv_nsec = nanosec_per_day % 1000000000;
     
     reserve_sem(shared_data->semid, 2);  //tutti iniziano giornata
-
-    #ifdef EXPLODE
-    int n_users_waiting = 0;
-    #endif
     
     int flag_explode = 0;
     while(giorni_sim < SIM_DURATION){
@@ -149,14 +145,12 @@ int main() {
 
         #ifdef EXPLODE
         reserve_sem(shared_data->semid, 3);
-        n_users_waiting = shared_data->utenti_in_attesa;
+        flag_explode = (shared_data->utenti_in_attesa > EXPLODE_THRESHOLD) ? 1 : 0;
+        shared_data->utenti_in_attesa = 0;
         release_sem(shared_data->semid, 3);
 
-        if(n_users_waiting > EXPLODE_THRESHOLD) {
-            flag_explode = 1;
+        if(flag_explode)
             break;
-        }
-        n_users_waiting = 0;
         #endif
         
         /*Apro in scrittura la FIFO ogni giorno per avvertire add_users: 

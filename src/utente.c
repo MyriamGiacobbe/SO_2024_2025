@@ -88,7 +88,9 @@ void startDay(int qid, int semid) {
             reserve_sem(datptr->semid, 3);
             datptr->stat.t_erog_serv[num_serv-1] += time;
             datptr->stat.n_serv_erog[num_serv-1] += 1;
+            #ifdef EXPLODE
             datptr->utenti_in_attesa++;
+            #endif
             release_sem(datptr->semid, 3);
 
             unblock_signal();
@@ -118,7 +120,9 @@ void startDay(int qid, int semid) {
             release_sem(semid, num_serv-1);
 
             reserve_sem(datptr->semid, 3);
+            #ifdef EXPLODE
             datptr->utenti_in_attesa--;
+            #endif
             datptr->stat.n_utenti_serviti[num_serv-1] += 1;
             datptr->stat.t_attesa_utenti[num_serv-1] += attesa;
             release_sem(datptr->semid, 3);

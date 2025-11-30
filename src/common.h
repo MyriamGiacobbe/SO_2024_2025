@@ -40,7 +40,9 @@ typedef struct {
     int qid;
     int serv_erog[NUM_SERV];
     int operatore_sportello[NOF_WORKERS_SEATS][NUM_SERV];
+    #ifdef EXPLODE
     int utenti_in_attesa;
+    #endif
 	Statistiche stat;
 } Data;
 
