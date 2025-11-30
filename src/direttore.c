@@ -103,8 +103,9 @@ int main() {
 
     int shmid = create_shm(KEY_SHM, sizeof(Data));
     shared_data = (Data*)attach_shm(shmid);
-
+    #ifdef EXPLODE
     shared_data->utenti_in_attesa = 0;
+    #endif
     shared_data->stat = (Statistiche){0};
     
     shared_data->semid = create_sem(IPC_PRIVATE, 4); //4 semafori: 0=Init, 1=DayEnd, 2=DayStart, 3=StatMutex
